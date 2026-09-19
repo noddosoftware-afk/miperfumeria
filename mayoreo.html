@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mayoreo | miperfumeria</title>
 <meta name="description" content="Precio de mayoreo en perfumes originales desde $4,000 por pedido. Para revendedores, tiendas y catálogo.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%23101C3A%27/%3E%3Ctext x=%2732%27 y=%2745%27 font-family=%27Georgia,serif%27 font-size=%2736%27 font-style=%27italic%27 fill=%27%23ffffff%27 text-anchor=%27middle%27%3EM%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&family=Playfair+Display:ital,wght@0,500;1,400;1,500&display=swap" rel="stylesheet">
@@ -26,11 +25,11 @@
 <section>
   <div class="wrap">
     <div class="sec-head"><h2 class="sec-title">Cómo funciona</h2>
-      <p class="sec-sub">Tres niveles según el monto de tu pedido</p></div>
+      <p class="sec-sub">Normal, mayoreo y distribuidor: consulta el precio de cada fragancia</p></div>
     <div class="tier-grid">
       <div class="tier">
-        <div class="t-name">Menudeo</div>
-        <div class="t-price">$0</div>
+        <div class="t-name">Normal</div>
+        <div class="t-price">Por pieza</div>
         <div class="t-note">Sin monto mínimo</div>
         <ul>
           <li>Precio de lista publicado en el sitio</li>
@@ -46,56 +45,32 @@
         <ul>
           <li>Precio especial por pieza</li>
           <li>Puedes mezclar modelos libremente</li>
-          <li>Envío gratis siempre</li>
+          <li>Envío gratis desde 3 piezas</li>
           <li>Lista de disponibilidad actualizada</li>
-          <li>Prioridad en apartados</li>
+          <li>Precios específicos por producto</li>
         </ul>
         <a class="btn btn-block" style="margin-top:20px" href="#solicitar">Solicitar lista</a>
       </div>
       <div class="tier">
-        <div class="t-name">Volumen</div>
-        <div class="t-price">$15,000</div>
-        <div class="t-note">Pedidos grandes</div>
-        <ul>
-          <li>Mejor precio del catálogo</li>
-          <li>Apartado con anticipo</li>
-          <li>Surtido recurrente mensual</li>
-          <li>Atención directa sin intermediarios</li>
-        </ul>
+        <div class="t-name">Distribuidor</div>
+        <div class="t-price">A tu medida</div>
+        <div class="t-note">Condiciones por confirmar con la tienda</div>
+        <ul><li>Tarifa de distribuidor por producto</li><li>Consulta requisitos de compra</li><li>Atención para armar tu selección</li></ul>
+        <a class="btn btn-ghost btn-block" style="margin-top:20px" href="#solicitar">Consultar condiciones</a>
       </div>
     </div>
     <p style="text-align:center;color:var(--muted);font-size:12px;margin-top:20px">
-      Los montos son de referencia para el maquetado. Se ajustan a la política real de la tienda antes de publicar.
+      Todos los precios se muestran en pesos mexicanos. Consulta disponibilidad al confirmar tu pedido.
     </p>
   </div>
 </section>
 
-<!-- ============ CALCULADORA ============ -->
-<section class="sec-bone" id="calculadora">
-  <div class="wrap">
-    <div class="sec-head"><h2 class="sec-title">Calcula tu pedido</h2>
-      <p class="sec-sub">Una idea rápida de cómo queda tu margen</p></div>
-    <div class="calc">
-      <div>
-        <label>¿Cuántas piezas piensas llevar?</label>
-        <input type="range" id="pzs" min="1" max="60" value="12" style="padding:0">
-        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin:6px 0 22px">
-          <span>1 pieza</span><strong id="pzsLbl" style="color:var(--navy)">12 piezas</strong><span>60 piezas</span>
-        </div>
-        <label>Precio promedio por pieza</label>
-        <select id="prom">
-          <option value="900">Perfumes árabes · ~$900</option>
-          <option value="1250" selected>Mixto · ~$1,250</option>
-          <option value="2400">Diseñador · ~$2,400</option>
-        </select>
-        <div style="margin-top:22px">
-          <label>¿A cuánto piensas revender?</label>
-          <input type="number" id="venta" value="1800" min="0" step="50">
-        </div>
-      </div>
-      <div class="calc-out" id="out"></div>
-    </div>
-  </div>
+<section class="sec-bone" id="precios">
+ <div class="wrap">
+  <div class="sec-head"><div class="eyebrow" style="text-align:center">Selección disponible</div><h2 class="sec-title">Una fragancia. Tres precios.</h2><p class="sec-sub">Precios por unidad; el set Versace se vende completo.</p></div>
+  <div class="inventory-table-wrap"><table class="inventory-table"><thead><tr><th>Producto</th><th>Existencia</th><th>Normal</th><th>Mayoreo</th><th>Distribuidor</th></tr></thead><tbody id="inventoryPrices"></tbody></table></div>
+  <p class="tier-caption">Mayoreo desde $4,000 por pedido. Los requisitos para tarifa de distribuidor se consultan directamente con la tienda.</p>
+ </div>
 </section>
 
 <!-- ============ PASOS ============ -->
@@ -111,7 +86,7 @@
       <div class="info-card">
         <div class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2" y="6" width="20" height="12"/><circle cx="12" cy="12" r="2.6"/></svg></div>
         <h3>2 · Armamos y pagas</h3>
-        <p>Confirmamos tu pedido con el precio de mayoreo aplicado. Pagas por transferencia, depósito o efectivo y apartamos tu mercancía.</p>
+        <p>Confirmamos tu pedido con el precio de mayoreo aplicado. Pagas por transferencia y envías el comprobante por WhatsApp para revisar tu pago.</p>
       </div>
       <div class="info-card">
         <div class="ico"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M2 7h11v9H2z"/><path d="M13 10h4l3 3v3h-7z"/><circle cx="6" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></div>
@@ -140,14 +115,14 @@
   <div class="wrap-narrow">
     <div class="sec-head"><h2 class="sec-title">Solicita la lista de mayoreo</h2>
       <p class="sec-sub">Te la enviamos el mismo día</p></div>
-    <form onsubmit="event.preventDefault();enviarSolicitudMayoreo(this)">
+    <form onsubmit="event.preventDefault();toast('Solicitud enviada (demostración)');this.reset()">
       <div class="form-grid">
-        <label class="field"><span>Nombre</span><input id="my-nombre" required placeholder="Tu nombre"></label>
-        <label class="field"><span>WhatsApp</span><input id="my-whatsapp" required placeholder="10 dígitos"></label>
-        <label class="field"><span>Ciudad</span><input id="my-ciudad" placeholder="Ciudad y estado"></label>
+        <label class="field"><span>Nombre</span><input required placeholder="Tu nombre"></label>
+        <label class="field"><span>WhatsApp</span><input required placeholder="10 dígitos"></label>
+        <label class="field"><span>Ciudad</span><input placeholder="Ciudad y estado"></label>
         <label class="field"><span>Presupuesto aproximado</span>
-          <select id="my-presupuesto"><option>$4,000 – $8,000</option><option>$8,000 – $15,000</option><option>Más de $15,000</option><option>Aún no lo defino</option></select></label>
-        <label class="field full"><span>¿Qué tipo de perfume vendes?</span><textarea id="my-tipo" rows="3" placeholder="Árabes, diseñador, para hombre, para mujer…"></textarea></label>
+          <select><option>$4,000 – $8,000</option><option>$8,000 – $15,000</option><option>Más de $15,000</option><option>Aún no lo defino</option></select></label>
+        <label class="field full"><span>¿Qué tipo de perfume vendes?</span><textarea rows="3" placeholder="Árabes, diseñador, para hombre, para mujer…"></textarea></label>
       </div>
       <button class="btn btn-block" type="submit">Enviar solicitud</button>
     </form>
@@ -160,37 +135,10 @@
 <script src="assets/js/layout.js"></script>
 <script src="assets/js/app.js"></script>
 <script>
-function enviarSolicitudMayoreo(form){
-  const g = id => document.getElementById(id)?.value.trim() || "";
-  const texto = `Hola, quiero la lista de mayoreo de ${TIENDA.nombre}.\n\nNombre: ${g("my-nombre")}\nWhatsApp: ${g("my-whatsapp")}\nCiudad: ${g("my-ciudad") || "—"}\nPresupuesto aproximado: ${g("my-presupuesto")}\nTipo de perfume que vende: ${g("my-tipo") || "—"}`;
-  abrirWhatsApp(texto);
-  toast("Te abrimos WhatsApp con tu solicitud lista para enviar.");
-  form.reset();
-}
-function calcular(){
-  const pz = +document.querySelector("#pzs").value;
-  const prom = +document.querySelector("#prom").value;
-  const venta = +document.querySelector("#venta").value || 0;
-  const bruto = pz * prom;
-  const desc = bruto >= 15000 ? .22 : (bruto >= 4000 ? .15 : 0);
-  const costo = Math.round(bruto * (1 - desc));
-  const ingreso = pz * venta;
-  const util = ingreso - costo;
-  document.querySelector("#pzsLbl").textContent = pz + (pz===1?" pieza":" piezas");
-  document.querySelector("#out").innerHTML = `
-    <div class="row"><span>Piezas</span><span>${pz}</span></div>
-    <div class="row"><span>Precio de lista</span><span>${MONEDA(bruto)}</span></div>
-    <div class="row"><span>Descuento por volumen</span><span>${desc? "−"+Math.round(desc*100)+"%" : "No aplica"}</span></div>
-    <div class="row"><span>Tu costo</span><span>${MONEDA(costo)}</span></div>
-    <div class="row"><span>Si revendes a ${MONEDA(venta)}</span><span>${MONEDA(ingreso)}</span></div>
-    <div class="row big"><span>Utilidad estimada</span><span>${MONEDA(Math.max(0,util))}</span></div>
-    <p style="font-size:11px;color:rgba(255,255,255,.55);margin:14px 0 0">
-      Cálculo ilustrativo. Los porcentajes reales se definen con la tienda.</p>`;
-}
 function pageInit(){
-  ["#pzs","#prom","#venta"].forEach(s=>document.querySelector(s).addEventListener("input", calcular));
-  calcular();
-  renderCards(PRODUCTOS.filter(p=>p.best || p.precio < 1300).slice(0,10), "#railMay");
+  const items=PRODUCTOS.filter(p=>p.stock!=null);
+  document.querySelector('#inventoryPrices').innerHTML=items.map(p=>`<tr><td><a href="producto.html?id=${p.id}">${p.marca} · ${p.nombre}</a><br><small>${p.ml}</small></td><td>${p.stock} ${p.contenido?'set':'pza'}</td><td>${MONEDA(p.precio)}</td><td>${MONEDA(p.mayoreo)}</td><td>${MONEDA(p.distribuidor)}</td></tr>`).join('');
+  renderCards(items, '#railMay');
 }
 </script>
 </body>

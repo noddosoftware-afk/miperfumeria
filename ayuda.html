@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ayuda: envíos, pagos y preguntas frecuentes | miperfumeria</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%23101C3A%27/%3E%3Ctext x=%2732%27 y=%2745%27 font-family=%27Georgia,serif%27 font-size=%2736%27 font-style=%27italic%27 fill=%27%23ffffff%27 text-anchor=%27middle%27%3EM%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&family=Playfair+Display:ital,wght@0,500;1,400;1,500&display=swap" rel="stylesheet">
@@ -25,7 +24,7 @@
   <div class="wrap">
     <div class="cards-3">
       <a class="info-card" href="#envios"><h3>Envíos</h3><p>Cobertura, tiempos y costo. Cuándo el envío es gratis.</p></a>
-      <a class="info-card" href="#pagos"><h3>Formas de pago</h3><p>Efectivo, transferencia y depósito. Cómo confirmar.</p></a>
+      <a class="info-card" href="#pagos"><h3>Formas de pago</h3><p>Transferencia y comprobante por WhatsApp.</p></a>
       <a class="info-card" href="#rastreo"><h3>Rastrea tu pedido</h3><p>Dónde consultar tu guía y qué hacer si se atrasa.</p></a>
     </div>
   </div>
@@ -36,13 +35,11 @@
     <div class="prose">
       <h2>Envíos</h2>
       <p>Enviamos a todo México con <strong>Skydrop</strong>, que integra Estafeta, FedEx, DHL, Redpack y Paquetexpress. Al generar tu guía se elige la paquetería que mejor llega a tu código postal.</p>
-      <table>
-        <tr><th>Zona</th><th>Tiempo estimado</th><th>Costo</th></tr>
-        <tr><td>Zona metropolitana</td><td>1 a 2 días hábiles</td><td>$149</td></tr>
-        <tr><td>Resto del país</td><td>2 a 5 días hábiles</td><td>$199</td></tr>
-        <tr><td>3 piezas o más</td><td>Igual que arriba</td><td><strong>Gratis</strong></td></tr>
-      </table>
-      <p>Los pedidos pagados antes de las 4:00 p.m. salen el mismo día hábil. Los del fin de semana salen el lunes.</p>
+      <table><tr><th>Modalidad</th><th>Tiempo</th><th>Costo</th></tr>
+        <tr><td>Entrega personal</td><td>Horario solicitado, sujeto a confirmación</td><td>Por acordar según ubicación</td></tr>
+        <tr><td>Paquetería</td><td>Se confirma según destino</td><td>$199</td></tr>
+        <tr><td>Paquetería desde 3 piezas</td><td>Se confirma según destino</td><td>Gratis</td></tr></table>
+      <p>Indica tu ciudad y código postal. Para entrega personal, comparte la dirección, quién recibe y tu horario preferido. El dueño confirmará cobertura, costo y horario por WhatsApp.</p>
     </div>
   </div>
 </section>
@@ -51,14 +48,11 @@
   <div class="wrap-narrow">
     <div class="prose">
       <h2>Formas de pago</h2>
-      <ul>
-        <li><strong>Transferencia (SPEI).</strong> Te damos la CLABE al confirmar. Apartamos tu pedido 12 horas mientras se refleja.</li>
-        <li><strong>Depósito.</strong> En ventanilla bancaria o tienda de conveniencia. Solo nos mandas la foto del comprobante.</li>
-        <li><strong>Efectivo.</strong> Disponible en entregas locales dentro de la zona metropolitana.</li>
-      </ul>
-      <p>Por ahora <strong>no manejamos pagos a meses sin intereses</strong>. Preferimos mantener el precio lo más bajo posible en lugar de absorber la comisión de la terminal.</p>
+      <p>Elige <strong>Continuar compra por WhatsApp</strong> en un producto o en tu bolsa. Se abrirá un mensaje con los perfumes, cantidades y precios para que el dueño confirme disponibilidad y entrega.</p>
+      <p>También puedes seleccionar <strong>Ver cuenta de transferencia</strong>. Después del pago, abre <strong>Enviar comprobante por WhatsApp</strong> y adjunta la imagen o el PDF en la conversación. El dueño revisará el pago.</p>
+      <p>No manejamos pagos a meses. El pago se realiza por transferencia.</p>
       <h3>Facturación</h3>
-      <p>Si necesitas factura, avísanos antes de pagar y te la emitimos con tus datos fiscales.</p>
+      <p>Si necesitas factura, consulta con el dueño los requisitos antes de pagar.</p>
     </div>
   </div>
 </section>
@@ -67,11 +61,11 @@
   <div class="wrap-narrow">
     <div class="prose">
       <h2>Rastrea tu pedido</h2>
-      <p>En cuanto tu paquete sale te enviamos por WhatsApp el número de guía y el enlace de rastreo de la paquetería asignada. Si pasan más de 48 horas sin movimiento, escríbenos y nosotros levantamos la aclaración.</p>
+      <p>En cuanto tu paquete sale te enviamos por WhatsApp el número de guía y el enlace de rastreo de la paquetería asignada. Si necesitas ayuda con el seguimiento, escríbenos.</p>
     </div>
-    <form style="max-width:520px;margin:0 auto" onsubmit="event.preventDefault();toast('En el sitio final esto consulta tu guía real')">
-      <label class="field"><span>Número de pedido o guía</span><input placeholder="Ej. MP-10428"></label>
-      <button class="btn btn-block" type="submit">Consultar</button>
+    <form style="max-width:520px;margin:0 auto" onsubmit="event.preventDefault();location.href=TIENDA.whatsapp+'?text='+encodeURIComponent('Hola, quiero consultar el estado de mi pedido o guía: '+this.querySelector('input').value)">
+      <label class="field"><span>Número de pedido o guía</span><input required placeholder="Número de pedido o guía"></label>
+      <button class="btn btn-block" type="submit">Consultar por WhatsApp</button>
     </form>
   </div>
 </section>
@@ -87,11 +81,11 @@
       <div class="acc-item"><button class="acc-btn">¿Cómo obtengo precio de mayoreo? <span class="sign">+</span></button>
         <div class="acc-panel">Llegando a $4,000 en un mismo pedido. Puedes mezclar los modelos que quieras, no hay que comprar caja cerrada. Revisa la <a href="mayoreo.html">página de mayoreo</a>.</div></div>
       <div class="acc-item"><button class="acc-btn">¿Manejan meses sin intereses? <span class="sign">+</span></button>
-        <div class="acc-panel">No. Trabajamos con efectivo, transferencia y depósito para mantener el precio más bajo.</div></div>
+        <div class="acc-panel">No. El pago se realiza por transferencia y la compra se coordina por WhatsApp.</div></div>
       <div class="acc-item"><button class="acc-btn">¿Puedo cambiar un perfume si no me gustó? <span class="sign">+</span></button>
-        <div class="acc-panel">Por higiene no aceptamos devolución de producto abierto. Si llegó dañado o equivocado, lo cambiamos sin costo avisando dentro de las primeras 48 horas.</div></div>
+        <div class="acc-panel">Por higiene no aceptamos devolución de producto abierto. Si llegó dañado durante el envío, repórtalo dentro de las primeras 24 horas y comparte evidencia para revisar tu caso.</div></div>
       <div class="acc-item"><button class="acc-btn">¿Tienen tienda física? <span class="sign">+</span></button>
-        <div class="acc-panel">La venta es en línea y por Instagram. En la zona metropolitana hacemos entregas en punto acordado.</div></div>
+        <div class="acc-panel">La venta es en línea y por Instagram. Hacemos entregas personales en ubicaciones y horarios acordados por WhatsApp.</div></div>
       <div class="acc-item"><button class="acc-btn">¿Cómo sé cuál perfume me queda? <span class="sign">+</span></button>
         <div class="acc-panel">Escríbenos y te preguntamos tres cosas: para qué ocasión, qué aromas te gustan y tu presupuesto. Con eso te damos dos o tres opciones concretas. También puedes leer la <a href="autenticidad.html#guia">guía para elegir</a>.</div></div>
     </div>
@@ -102,8 +96,9 @@
   <div class="wrap-narrow">
     <div class="prose">
       <h2>Cambios y devoluciones</h2>
-      <p>Tienes 48 horas desde que recibes tu pedido para reportar cualquier problema: producto dañado, equivocado o con señales de no ser original. Nosotros cubrimos la guía de retorno y hacemos el cambio o el reembolso.</p>
-      <p>No aceptamos devoluciones por cambio de opinión una vez abierto el sello, por razones de higiene.</p>
+      <p>Si recibes un producto con daño atribuible al envío, informa dentro de las 24 horas posteriores a la entrega. Comparte fotos del empaque y del perfume antes de abrirlo, y el video de apertura si lo tienes, para revisar lo sucedido.</p>
+      <p>Contacta al dueño por WhatsApp para acordar la solución de tu caso. Las condiciones de cambio, reembolso o saldo a favor están pendientes de unificación por el negocio.</p>
+      <p>No se aceptan cambios por gusto personal, elección de fragancia, percepción del aroma o cambio de opinión una vez abierto o utilizado el producto.</p>
 
       <h2 id="terminos">Términos y condiciones</h2>
       <p>Los precios están en pesos mexicanos e incluyen impuestos. La disponibilidad se actualiza durante el día; si un artículo se agota después de tu pago, te ofrecemos un modelo equivalente o el reembolso inmediato. Las promociones no son acumulables salvo que se indique.</p>

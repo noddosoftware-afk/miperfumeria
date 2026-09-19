@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mi cuenta | miperfumeria</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%23101C3A%27/%3E%3Ctext x=%2732%27 y=%2745%27 font-family=%27Georgia,serif%27 font-size=%2736%27 font-style=%27italic%27 fill=%27%23ffffff%27 text-anchor=%27middle%27%3EM%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&family=Playfair+Display:ital,wght@0,500;1,400;1,500&display=swap" rel="stylesheet">
@@ -13,29 +12,12 @@
 <body>
 <div id="site-header"></div>
 
-<div class="plp-head"><div class="wrap"><h1>Mi cuenta</h1>
-  <p>Crea tu cuenta para comprar más rápido, guardar direcciones y consultar tus pedidos anteriores.</p></div></div>
-
-<section>
-  <div class="wrap">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;max-width:900px;margin:0 auto">
-      <div>
-        <h3 style="font-family:var(--f-brand);font-size:12px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:20px">Iniciar sesión</h3>
-        <form onsubmit="event.preventDefault();toast('Demostración: sin cuentas reales todavía')">
-          <label class="field"><span>Correo</span><input type="email" required placeholder="tucorreo@ejemplo.com"></label>
-          <label class="field"><span>Contraseña</span><input type="password" required placeholder="••••••••"></label>
-          <button class="btn btn-block" type="submit">Entrar</button>
-        </form>
-      </div>
-      <div style="border-left:1px solid var(--line);padding-left:48px">
-        <h3 style="font-family:var(--f-brand);font-size:12px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:20px">¿Aún no tienes cuenta?</h3>
-        <ul class="prose"><li>Compra en menos pasos</li><li>Guarda tus direcciones de envío</li><li>Consulta tus pedidos y guías</li><li>Recibe avisos de reposición</li></ul>
-        <a class="btn btn-ghost btn-block" style="margin-top:20px" href="#">Crear cuenta</a>
-      </div>
-    </div>
-  </div>
-</section>
-
+<div class="plp-head"><div class="wrap"><h1>Tu compra, contigo</h1><p>No necesitas una cuenta. El dueño te atiende directamente por WhatsApp.</p></div></div>
+<section><div class="wrap"><div class="cards-3">
+<a class="info-card" href="carrito.html"><h3>Mi selección</h3><p>Revisa los perfumes de tu bolsa y continúa tu compra.</p></a>
+<a class="info-card" href="ayuda.html#rastreo"><h3>Consultar mi entrega</h3><p>Comparte tu número de pedido o guía por WhatsApp.</p></a>
+<a class="info-card" href="admin.html"><h3>Panel de la tienda</h3><p>Vista de demostración para el dueño: inventario, pedidos y entregas.</p></a>
+</div></div></section>
 <div id="site-footer"></div>
 <script src="assets/js/data.js"></script>
 <script src="assets/js/layout.js"></script>

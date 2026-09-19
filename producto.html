@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Producto | miperfumeria</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%23101C3A%27/%3E%3Ctext x=%2732%27 y=%2745%27 font-family=%27Georgia,serif%27 font-size=%2736%27 font-style=%27italic%27 fill=%27%23ffffff%27 text-anchor=%27middle%27%3EM%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&family=Playfair+Display:ital,wght@0,500;1,400;1,500&display=swap" rel="stylesheet">
@@ -61,31 +60,31 @@ function pageInit(){
      / <a href="catalogo.html?m=${encodeURIComponent(p.marca)}">${p.marca}</a> / <span>${p.nombre}</span>`;
 
   document.querySelector("#pdp").innerHTML = `
-    <div class="pdp-gallery">
-      <div class="pdp-thumbs">
-        <button class="is-on">${cardArt(p)}</button>
-        <button>${cardArt(p)}</button>
-        <button>${cardArt(p)}</button>
-      </div>
-      <div class="pdp-main-img">${cardArt(p)}</div>
+    <div class="pdp-gallery pdp-gallery-single">
+      <div class="pdp-main-img">${cardArt(p,true)}</div>
+      <p class="image-caption">Imagen ilustrativa generada con IA para este maquetado.</p>
     </div>
     <div class="pdp-info">
       <div class="pdp-brand">${p.marca}</div>
       <h1>${p.nombre}</h1>
-      <div class="card-rating"><span class="stars">${stars(p.rating)}</span> ${p.rating} · ${p.reviews} opiniones</div>
+      <p class="pdp-intro">${p.contenido ? "Un regalo, un ritual completo." : "Tu próxima fragancia, a tu manera."}</p>
 
       <div class="price-row">
         <span class="price-now">${MONEDA(p.precio)}</span>
         ${p.lista?`<span class="price-was">${MONEDA(p.lista)}</span><span class="price-off">-${off}%</span>`:""}
       </div>
-      <div class="sku">SKU ${p.id.toUpperCase()} · Eau de Parfum · ${p.familia}</div>
+      <div class="sku">SKU ${p.id.toUpperCase()}${p.concentracion ? ' · '+p.concentracion : ''}</div>
+      ${p.mayoreo ? `<div class="price-tiers" aria-label="Precios por tipo de compra">
+        <div><span>Normal</span><b>${MONEDA(p.precio)}</b></div>
+        <div><span>Mayoreo</span><b>${MONEDA(p.mayoreo)}</b></div>
+        <div><span>Distribuidor</span><b>${MONEDA(p.distribuidor)}</b></div>
+      </div><p class="tier-caption">Precios en MXN${p.contenido?' por set':''}. Mayoreo en pedidos desde $4,000. Consulta las condiciones de distribuidor.</p>` : ''}
 
       <div class="opt-group">
         <span class="lbl">Presentación</span>
         <div class="opts">
           <button class="opt is-on">${p.ml}</button>
-          <button class="opt" onclick="toast('Presentación sujeta a disponibilidad')">50 ml</button>
-          <button class="opt" onclick="toast('Presentación sujeta a disponibilidad')">Set con estuche</button>
+
         </div>
       </div>
 
@@ -96,36 +95,37 @@ function pageInit(){
         </div>
       </div>
 
-      <div class="stock-line"><i class="dot"></i> Disponible · se envía el mismo día si compras antes de las 4:00 p.m.</div>
+      <div class="stock-line"><i class="dot"></i> ${stockText(p)}</div>
 
-      <div class="pdp-actions">
-        <button class="btn" onclick="addToCart('${p.id}', +document.getElementById('pdpQty').textContent)">Agregar a la bolsa</button>
-        <a class="btn btn-ghost" href="${TIENDA.whatsapp}" target="_blank" rel="noopener">Preguntar por WhatsApp</a>
-      </div>
+      <div id="deliveryChoice"></div>
+      <div class="pdp-actions purchase-actions" id="productPurchase">${purchaseActions([{id:p.id,q:1}],p.id)}</div>
+      ${p.stock!==0?`<button class="bag-secondary" onclick="addToCart('${p.id}', +document.getElementById('pdpQty').textContent)">Agregar a la bolsa para combinar perfumes</button>`:''}
+      <p class="purchase-note">Te atendemos por WhatsApp para confirmar disponibilidad y entrega. Pago por transferencia.</p>
 
       <div class="usp-list">
         <div class="usp">${ICON.escudo}<div><b>100% original.</b> Producto sellado. Si no lo es, te devolvemos tu dinero.</div></div>
-        <div class="usp">${ICON.camion}<div><b>Envío gratis desde 3 piezas.</b> Enviamos con Skydrop a todo México, 2 a 5 días hábiles.</div></div>
+        <div class="usp">${ICON.camion}<div><b>Envío gratis desde 3 piezas.</b> Enviamos con Skydrop. Confirma el tiempo según tu destino.</div></div>
         <div class="usp">${ICON.billete}<div><b>Precio de mayoreo</b> en pedidos desde ${MONEDA(TIENDA.mayoreoMonto)}.</div></div>
-        <div class="usp">${ICON.tarjeta}<div><b>Pago</b> en efectivo, transferencia o depósito.</div></div>
+        <div class="usp">${ICON.tarjeta}<div><b>Pago por transferencia.</b> Envía el comprobante por WhatsApp para su revisión.</div></div>
       </div>
 
-      <div class="notes-grid">
+      ${p.contenido ? `<div class="set-contents"><h3>Tu set incluye</h3><ul>${p.contenido.map(c=>`<li>${c}</li>`).join('')}</ul></div>` : ''}
+      ${p.notas ? `<div class="notes-grid">
         <div class="note-box"><b>Notas de salida</b><p>${p.notas.s}</p></div>
         <div class="note-box"><b>Notas de corazón</b><p>${p.notas.c}</p></div>
         <div class="note-box"><b>Notas de fondo</b><p>${p.notas.f}</p></div>
-      </div>
+      </div>` : ''}
     </div>`;
 
   document.querySelector("#acc").innerHTML = `
     <div class="acc-item is-on"><button class="acc-btn">Descripción <span class="sign">+</span></button>
       <div class="acc-panel"><p>${p.desc}</p>
-      <p>Familia olfativa: <strong>${p.familia}</strong>. Recomendado para ${p.genero==="mujer"?"ella":(p.genero==="hombre"?"él":"cualquiera")}, en ${p.familia==="Fresco"||p.familia==="Cítrico"?"clima cálido y uso de día":"clima templado a frío y uso de noche"}.</p></div></div>
+      </div></div>
     <div class="acc-item"><button class="acc-btn">Duración y proyección <span class="sign">+</span></button>
-      <div class="acc-panel"><p>Duración estimada de 6 a 10 horas en piel, dependiendo del tipo de piel y el clima. Las primeras dos horas son las de mayor proyección.</p>
+      <div class="acc-panel"><p>La duración y la proyección varían según la fragancia, la piel y el clima. Escríbenos si quieres ayuda para elegir.</p>
       <p>Consejo: aplica sobre piel hidratada en cuello, muñecas y detrás de las orejas. No frotes después de aplicar.</p></div></div>
     <div class="acc-item"><button class="acc-btn">Envíos y entrega <span class="sign">+</span></button>
-      <div class="acc-panel"><p>Enviamos con Skydrop, que integra Estafeta, FedEx, DHL, Redpack y Paquetexpress. Tiempo estimado de 2 a 5 días hábiles según tu código postal. Recibes tu número de guía el mismo día del envío.</p>
+      <div class="acc-panel"><p>Enviamos con Skydrop, que integra Estafeta, FedEx, DHL, Redpack y Paquetexpress. El tiempo estimado se confirma según tu código postal. Recibes tu número de guía el mismo día del envío.</p>
       <p>Envío gratis en pedidos de 3 piezas o más.</p></div></div>
     <div class="acc-item"><button class="acc-btn">Garantía de autenticidad <span class="sign">+</span></button>
       <div class="acc-panel"><p>Todos los perfumes se venden sellados y con su código de lote visible. Si al recibirlo detectas cualquier señal de que no es original, lo recogemos sin costo y te reembolsamos el total.</p></div></div>`;
@@ -144,7 +144,11 @@ function pageInit(){
 }
 function pdpQty(d){
   const n = document.getElementById("pdpQty");
-  n.textContent = Math.max(1, +n.textContent + d);
+  const p=byId(params().get('id'))||PRODUCTOS[0];
+  const max=p.stock ?? 99;
+  if(+n.textContent+d>max){toast('Existencia disponible: '+max);return;}
+  n.textContent = Math.max(1, Math.min(max,+n.textContent+d));
+  document.getElementById("productPurchase").innerHTML=purchaseActions([{id:p.id,q:+n.textContent}],p.id);
 }
 </script>
 </body>

@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initUI();
   renderCart();
   if (typeof pageInit === "function") pageInit();
+  mountDelivery();
 });
 
 /* ---------- utilidades ---------- */
@@ -21,19 +22,13 @@ const $$ = (s, c = document) => [...c.querySelectorAll(s)];
 const byId = id => PRODUCTOS.find(p => p.id === id);
 const params = () => new URLSearchParams(location.search);
 
-function abrirWhatsApp(mensaje){
-  const base = (TIENDA.whatsapp || "").trim();
-  if(!base){ toast("Falta configurar el número de WhatsApp en data.js"); return; }
-  const sep = base.includes("?") ? "&" : "?";
-  window.open(base + sep + "text=" + encodeURIComponent(mensaje), "_blank", "noopener");
-}
 function toast(msg){
   const t = $("#toast"); if(!t) return;
   t.textContent = msg; t.classList.add("is-on");
   clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove("is-on"), 2400);
 }
 function stars(r){
-  const full = Math.round(r);
+  const full = Math.max(0, Math.min(5, Math.round(r || 0)));
   return "★".repeat(full) + "☆".repeat(5-full);
 }
 function goSearch(e){
@@ -106,7 +101,7 @@ function cardHTML(p){
   if(p.nuevo)  badges.push('<span class="badge soft">Nuevo</span>');
   if(off >= 15) badges.push(`<span class="badge sale">-${off}%</span>`);
   return `
-<article class="card">
+<article class="card" data-product="${p.id}">
   <a class="card-media" href="producto.html?id=${p.id}">
     <div class="card-badges">${badges.join("")}</div>
     ${cardArt(p)}
@@ -118,12 +113,14 @@ function cardHTML(p){
   <div class="card-body">
     <a href="producto.html?id=${p.id}" class="card-brand">${p.marca}</a>
     <a href="producto.html?id=${p.id}" class="card-name">${p.nombre}</a>
-    <span class="card-meta">${p.ml} · ${p.familia}</span>
+    <span class="card-meta">${p.ml}${p.familia && p.familia!=="Por descubrir" ? " · "+p.familia : ""}</span>
     <div class="card-price">
       <span class="price-now">${MONEDA(p.precio)}</span>
       ${p.lista ? `<span class="price-was">${MONEDA(p.lista)}</span><span class="price-off">-${off}%</span>` : ""}
     </div>
-    <div class="card-rating"><span class="stars">${stars(p.rating)}</span> ${p.rating} (${p.reviews})</div>
+    ${p.mayoreo ? `<div class="card-tiers"><span>Mayoreo <b>${MONEDA(p.mayoreo)}</b></span><span>Distribuidor <b>${MONEDA(p.distribuidor)}</b></span></div>` : ''}
+    <div class="card-stock ${p.stock===1?'last-unit':''}">${stockText(p)}</div>
+    <div class="card-buy">${purchaseActions([{id:p.id,q:1}],p.id)}</div>
   </div>
 </article>`;
 }
@@ -131,12 +128,20 @@ const renderCards = (arr, sel) => { const n = $(sel); if(n) n.innerHTML = arr.ma
 
 /* ---------- bolsa de compra ---------- */
 const CART_KEY = "mp_cart";
-const getCart = () => { try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; } catch(e){ return []; } };
+const getCart = () => {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CART_KEY));
+    if(!Array.isArray(raw)) return [];
+    return raw.filter(i=>byId(i.id) && Number.isInteger(i.q) && i.q>0).map(i=>({id:i.id,q:Math.min(i.q,byId(i.id).stock ?? Infinity)})).filter(i=>i.q>0);
+  } catch(e){ return []; }
+};
 const setCart = c => { try { localStorage.setItem(CART_KEY, JSON.stringify(c)); } catch(e){} renderCart(); };
 
 function addToCart(id, qty=1){
+  const p=byId(id); if(!p || !Number.isInteger(qty) || qty<1) return;
   const c = getCart();
   const hit = c.find(i => i.id === id);
+  if(p.stock!=null && (hit?.q||0)+qty>p.stock){toast('Existencia disponible: '+p.stock+' '+(p.contenido?'set(s)':'pieza(s)'));return;}
   hit ? hit.q += qty : c.push({id, q:qty});
   setCart(c);
   toast(byId(id).marca + " agregado a tu bolsa");
@@ -144,7 +149,11 @@ function addToCart(id, qty=1){
   $("#overlay")?.classList.add("is-on");
 }
 const cartCount = () => getCart().reduce((s,i)=>s+i.q, 0);
-const cartTotal = () => getCart().reduce((s,i)=>s + byId(i.id).precio*i.q, 0);
+const cartBaseTotal = () => getCart().reduce((s,i)=>s + byId(i.id).precio*i.q, 0);
+const cartWholesale = () => cartBaseTotal() >= TIENDA.mayoreoMonto;
+const cartUnitPrice = p => cartWholesale() && p.mayoreo ? p.mayoreo : p.precio;
+const cartTotal = () => getCart().reduce((s,i)=>s + cartUnitPrice(byId(i.id))*i.q, 0);
+const stockText = p => p.stock==null ? 'Consultar disponibilidad' : p.stock===0 ? 'Agotado' : p.stock===1 ? (p.contenido?'Último set disponible':'Última pieza disponible') : p.stock+' '+(p.contenido?'sets disponibles':'piezas disponibles');
 
 function renderCart(){
   const c = getCart();
@@ -179,7 +188,7 @@ function renderCart(){
           </div>
           <br><a class="rm" onclick="removeItem('${p.id}')">Eliminar</a>
         </div>
-        <strong style="font-family:var(--f-brand);font-size:13px">${MONEDA(p.precio*i.q)}</strong>
+        <strong style="font-family:var(--f-brand);font-size:13px">${MONEDA(cartUnitPrice(p)*i.q)}</strong>
       </div>`;
     }).join("");
 
@@ -187,16 +196,17 @@ function renderCart(){
     const envio = piezas >= TIENDA.envioGratisPiezas ? 0 : 199;
     foot.innerHTML = `
       <div class="sum-row"><span>Subtotal (${piezas} pza)</span><span>${MONEDA(sub)}</span></div>
-      <div class="sum-row"><span>Envío</span><span>${envio? MONEDA(envio) : "Gratis"}</span></div>
-      ${sub >= TIENDA.mayoreoMonto ? `<div class="sum-row" style="color:var(--ok)"><span>Precio mayoreo aplicado</span><span>✓</span></div>` : ""}
-      <div class="sum-row total"><span>Total</span><span>${MONEDA(sub+envio)}</span></div>
-      <a class="btn btn-block" href="checkout.html" style="margin-top:14px">Finalizar compra</a>
+      <div class="sum-row"><span>${deliveryData().method==='personal'?'Entrega personal':'Envío'}</span><span>${deliveryData().method==='personal'?'Por confirmar':envio? MONEDA(envio) : 'Gratis'}</span></div>
+      ${cartWholesale() ? `<div class="sum-row" style="color:var(--ok)"><span>Precio mayoreo aplicado</span><span>✓</span></div>` : ""}
+      <div class="sum-row total"><span>${deliveryData().method==='personal'?'Subtotal sin entrega':'Total con paquetería'}</span><span>${MONEDA(sub+(deliveryData().method==='personal'?0:envio))}</span></div>
+      <div class="purchase-actions">${purchaseActions(c)}</div>
       <a class="btn btn-block btn-ghost" href="carrito.html" style="margin-top:8px">Ver la bolsa</a>`;
   }
   if(typeof onCartChange === "function") onCartChange();
 }
 function changeQty(id, d){
   const c = getCart(); const i = c.find(x=>x.id===id); if(!i) return;
+  if(byId(id).stock!=null && i.q+d>byId(id).stock){toast('Ya agregaste toda la existencia disponible');return;}
   i.q += d; if(i.q < 1) return removeItem(id);
   setCart(c);
 }
@@ -209,7 +219,8 @@ function filtrar(){
   const txt = (q.get("q") || "").toLowerCase().trim();
 
   let arr = PRODUCTOS.slice();
-  if(f === "best")   arr = arr.filter(p=>p.best);
+  if(f === "inventario") arr = arr.filter(p=>p.stock>0);
+  else if(f === "best")   arr = arr.filter(p=>p.best);
   else if(f === "nuevo")  arr = arr.filter(p=>p.nuevo);
   else if(f === "oferta") arr = arr.filter(p=>p.oferta || (p.lista && p.lista > p.precio));
   else if(["hombre","mujer","unisex"].includes(f)) arr = arr.filter(p=>p.genero===f);
@@ -233,7 +244,7 @@ function filtrar(){
   const orden = $("#orden")?.value;
   if(orden === "precio-asc")  arr.sort((a,b)=>a.precio-b.precio);
   if(orden === "precio-desc") arr.sort((a,b)=>b.precio-a.precio);
-  if(orden === "rating")      arr.sort((a,b)=>b.rating-a.rating);
+  if(orden === "rating")      arr.sort((a,b)=>(b.rating||0)-(a.rating||0));
   if(orden === "nuevo")       arr.sort((a,b)=>(b.nuevo||0)-(a.nuevo||0));
   return arr;
 }
@@ -243,3 +254,71 @@ document.addEventListener("DOMContentLoaded", () => {
   $$("[data-bg]").forEach((n,i) => n.innerHTML = artBg(n.dataset.bg, i));
   $$("[data-tile]").forEach((n,i) => n.innerHTML = artTile(n.dataset.tile, i));
 });
+
+
+/* Compra asistida: abrir WhatsApp prepara el mensaje, nunca lo envía. */
+function purchaseItems(items){
+  return items.filter(i=>byId(i.id) && Number.isInteger(i.q) && i.q>0 && byId(i.id).stock!==0)
+    .map(i=>({id:i.id,q:Math.min(i.q,byId(i.id).stock ?? 99)}));
+}
+function purchaseQuote(items){
+  const clean=purchaseItems(items);
+  const wholesale=clean.reduce((s,i)=>s+byId(i.id).precio*i.q,0)>=TIENDA.mayoreoMonto;
+  const lines=clean.map(i=>{const p=byId(i.id);return {...i,p,unit:wholesale&&p.mayoreo?p.mayoreo:p.precio};});
+  const units=lines.reduce((s,i)=>s+i.q,0);
+  const subtotal=lines.reduce((s,i)=>s+i.unit*i.q,0);
+  const shipping=units && units<TIENDA.envioGratisPiezas?199:0;
+  return {lines,units,subtotal,shipping,total:subtotal+shipping,wholesale};
+}
+function purchaseMessage(items,receipt=false){
+  const q=purchaseQuote(items);
+  if(!q.lines.length)return '';
+  return [receipt?'Hola, miperfumeria. Quiero enviar el comprobante de transferencia de esta compra:':'Hola, miperfumeria. Me gustaría comprar:',
+    '',...q.lines.map(i=>`${i.q} × ${i.p.marca} ${i.p.nombre} (${i.p.ml})\nSKU: ${i.id}\nPrecio unitario: ${MONEDA(i.unit)} MXN · Importe: ${MONEDA(i.unit*i.q)} MXN${i.p.contenido?'\nIncluye: '+i.p.contenido.join(', '):''}`),
+    '',q.wholesale?'Precio de mayoreo aplicado según el monto.':'Precio normal.',
+    `Subtotal: ${MONEDA(q.subtotal)} MXN`,
+    deliveryData().method==='personal'?'Entrega personal: costo por confirmar.':`Envío por paquetería: ${q.shipping?MONEDA(q.shipping)+' MXN':'gratis (3 piezas o más)'}`,
+    deliveryData().method==='personal'?`Subtotal de perfumes: ${MONEDA(q.subtotal)} MXN (entrega pendiente de cotizar).`:`Total con paquetería: ${MONEDA(q.total)} MXN`,
+    ...deliveryMessage(),
+    receipt?'Adjuntaré el comprobante en este chat. ¿Me ayudan a verificar el pago y coordinar la entrega?':'¿Me confirman disponibilidad y forma de entrega? El pago sería por transferencia.'
+  ].join('\n');
+}
+function purchaseURL(items,receipt=false){
+  return TIENDA.whatsapp+'?text='+encodeURIComponent(purchaseMessage(items,receipt));
+}
+function purchaseActions(items,id=null){
+  const clean=purchaseItems(items);if(!clean.length)return '<p class="purchase-note">No hay productos disponibles para continuar.</p>';
+  const transfer='checkout.html'+(id?'?id='+encodeURIComponent(id)+'&qty='+clean[0].q:'');
+  return `<a class="btn btn-block wa-buy" data-purchase="${encodeURIComponent(JSON.stringify(clean))}" href="${purchaseURL(clean)}" target="_blank" rel="noopener">Continuar compra por WhatsApp</a>
+    <a class="btn btn-block btn-ghost transfer-buy" href="${transfer}">Ver cuenta de transferencia</a>`;
+}
+function selectedPurchase(){
+  const id=params().get('id');
+  if(id){const raw=params().get('qty');const qty=raw===null?1:Number(raw);return purchaseItems([{id,q:qty}]);}
+  return getCart();
+}
+
+
+/* Preferencias de entrega de la sesión. El horario se solicita, no se confirma. */
+function deliveryData(){try{return JSON.parse(sessionStorage.getItem('mp_delivery'))||{};}catch{return {};}}
+function deliveryMessage(){const d=deliveryData();return [
+ 'Modalidad: '+(d.method==='personal'?'entrega personal':d.method==='paqueteria'?'paquetería':'por acordar'),
+ ...[['recipient','Recibe'],['city','Ciudad'],['postcode','Código postal'],['address','Dirección'],['reference','Referencias'],['schedule','Horario solicitado (pendiente de confirmar)']].filter(([k])=>d[k]&&(k!=='schedule'||d.method==='personal')).map(([k,l])=>l+': '+d[k])];}
+function mountDelivery(){
+ const target=document.getElementById('deliveryChoice');if(!target)return;
+ target.innerHTML=`<details class="delivery-box"><summary>Elige cómo recibir tu compra</summary><p>Opcional. Puedes acordar los detalles por WhatsApp.</p><label class="field"><span>Modalidad de entrega</span><select name="method"><option value="">Por acordar</option><option value="personal">Entrega personal</option><option value="paqueteria">Envío por paquetería</option></select></label><div class="form-grid">
+ <label class="field"><span>Persona que recibe</span><input name="recipient" autocomplete="name" maxlength="100"></label>
+ <label class="field"><span>Ciudad</span><input name="city" autocomplete="address-level2" maxlength="100"></label>
+ <label class="field"><span>Código postal</span><input name="postcode" inputmode="numeric" maxlength="5" autocomplete="postal-code"></label>
+ <label class="field"><span>Horario preferido (entrega personal)</span><input name="schedule" placeholder="Por ejemplo, viernes por la tarde" maxlength="120"></label>
+ <label class="field full"><span>Dirección</span><input name="address" autocomplete="street-address" maxlength="220"></label>
+ <label class="field full"><span>Referencias</span><input name="reference" maxlength="220"></label></div>
+ <p class="purchase-note" id="deliveryExplanation"></p></details>`;
+ const data=deliveryData();target.querySelectorAll('input,select').forEach(el=>{el.value=data[el.name]||'';el.addEventListener('input',()=>{const next={};target.querySelectorAll('input,select').forEach(x=>next[x.name]=x.value.trim());try{sessionStorage.setItem('mp_delivery',JSON.stringify(next));}catch{}refreshDelivery();});});refreshDelivery();
+}
+function refreshDelivery(){
+ document.querySelectorAll('[data-purchase]').forEach(a=>{try{a.href=purchaseURL(JSON.parse(decodeURIComponent(a.dataset.purchase)),a.dataset.receipt==='true');}catch{}});
+ const note=document.getElementById('deliveryExplanation');if(note)note.textContent=deliveryData().method==='personal'?'El dueño confirmará cobertura, costo y horario. La hora indicada es una solicitud.':'Paquetería: $199, gratis desde 3 piezas. El tiempo de llegada se confirma según destino.';
+ const schedule=document.querySelector('#deliveryChoice [name="schedule"]');if(schedule)schedule.disabled=deliveryData().method!=='personal';
+ renderCart();
+}

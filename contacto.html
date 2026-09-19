@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Contacto | miperfumeria</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%23101C3A%27/%3E%3Ctext x=%2732%27 y=%2745%27 font-family=%27Georgia,serif%27 font-size=%2736%27 font-style=%27italic%27 fill=%27%23ffffff%27 text-anchor=%27middle%27%3EM%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&family=Playfair+Display:ital,wght@0,500;1,400;1,500&display=swap" rel="stylesheet">
@@ -17,7 +16,7 @@
   <div class="hero-bg" data-bg="navy"></div>
   <div class="wrap">
     <h1>Contacto</h1>
-    <p>Respondemos de lunes a sábado, de 10:00 a 20:00 h. Lo más rápido es por WhatsApp o Instagram.</p>
+    <p>Compra y coordina tu entrega por WhatsApp. También nos encuentras en Instagram y TikTok.</p>
   </div>
 </div>
 
@@ -31,19 +30,19 @@
   <div class="wrap-narrow">
     <div class="sec-head"><h2 class="sec-title">Escríbenos</h2>
       <p class="sec-sub">Dinos qué buscas y te respondemos con opciones concretas</p></div>
-    <form onsubmit="event.preventDefault();enviarContacto(this)">
+    <form onsubmit="event.preventDefault();toast('Mensaje enviado (demostración)');this.reset()">
       <div class="form-grid">
-        <label class="field"><span>Nombre</span><input id="c-nombre" required placeholder="Tu nombre"></label>
-        <label class="field"><span>WhatsApp o correo</span><input id="c-contacto" required placeholder="Para responderte"></label>
+        <label class="field"><span>Nombre</span><input required placeholder="Tu nombre"></label>
+        <label class="field"><span>WhatsApp o correo</span><input required placeholder="Para responderte"></label>
         <label class="field full"><span>Motivo</span>
-          <select id="c-motivo">
+          <select>
             <option>Quiero recomendación de un perfume</option>
             <option>Disponibilidad de un modelo</option>
             <option>Precio de mayoreo</option>
             <option>Estado de mi pedido</option>
             <option>Otro</option>
           </select></label>
-        <label class="field full"><span>Mensaje</span><textarea id="c-mensaje" rows="5" placeholder="Cuéntanos qué necesitas"></textarea></label>
+        <label class="field full"><span>Mensaje</span><textarea rows="5" placeholder="Cuéntanos qué necesitas"></textarea></label>
       </div>
       <button class="btn btn-block" type="submit">Enviar mensaje</button>
     </form>
@@ -56,16 +55,6 @@
 <script src="assets/js/layout.js"></script>
 <script src="assets/js/app.js"></script>
 <script>
-function enviarContacto(form){
-  const nombre = document.getElementById("c-nombre").value.trim();
-  const contacto = document.getElementById("c-contacto").value.trim();
-  const motivo = document.getElementById("c-motivo").value;
-  const mensaje = document.getElementById("c-mensaje").value.trim();
-  const texto = `Hola, soy ${nombre}.\nMotivo: ${motivo}\nMensaje: ${mensaje}\n\nMe pueden contactar en: ${contacto}`;
-  abrirWhatsApp(texto);
-  toast("Te abrimos WhatsApp con tu mensaje listo para enviar.");
-  form.reset();
-}
 function pageInit(){
   document.querySelector("#canales").innerHTML = `
     <a class="info-card" href="${TIENDA.whatsapp}" target="_blank" rel="noopener">
@@ -74,9 +63,9 @@ function pageInit(){
     <a class="info-card" href="${TIENDA.instagram}" target="_blank" rel="noopener">
       <div class="ico">${ICON.ig}</div><h3>Instagram</h3>
       <p>${TIENDA.instagramUser} · Ahí publicamos llegadas nuevas y lo que queda en existencia.</p></a>
-    <a class="info-card" href="mailto:${TIENDA.correo}">
-      <div class="ico">${ICON.caja}</div><h3>Correo</h3>
-      <p>${TIENDA.correo} · Para facturación, mayoreo y temas de pedidos.</p></a>`;
+    <a class="info-card" href="${TIENDA.tiktok}" target="_blank" rel="noopener">
+      <div class="ico">${ICON.tk}</div><h3>TikTok</h3>
+      <p>@miperfumeriamx · Descubre nuestras fragancias.</p></a>`;
 }
 </script>
 </body>

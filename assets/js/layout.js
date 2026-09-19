@@ -62,7 +62,7 @@ const NAV = [
     {h:"Colecciones", items:[["Eau de Parfum","catalogo.html?f=disenador"],["Clásicos de noche","catalogo.html?fam=Oriental"],["Para oficina","catalogo.html?fam=Amaderado"],["Ver todo diseñador","catalogo.html?f=disenador"]]}
   ]},
   {t:"Más vendidos", h:"catalogo.html?f=best"},
-  {t:"Novedades", h:"catalogo.html?f=nuevo"},
+  {t:"Disponible ahora", h:"catalogo.html?f=inventario"},
   {t:"Mayoreo", h:"mayoreo.html"}
 ];
 
@@ -91,7 +91,7 @@ function buildHeader(){
       <div class="announce-item is-on"><strong>ENVÍO GRATIS</strong> comprando 3 piezas o más · a todo México</div>
       <div class="announce-item">Precio de <strong>MAYOREO</strong> en pedidos desde $4,000 MXN</div>
       <div class="announce-item"><strong>100% ORIGINALES</strong> · Garantía de autenticidad en cada pedido</div>
-      <div class="announce-item">Pagos en <strong>efectivo, transferencia o depósito</strong></div>
+      <div class="announce-item">Compra por <strong>WhatsApp</strong> · Pago por transferencia</div>
     </div>
     <button class="announce-nav" data-ann="1" aria-label="Siguiente aviso">›</button>
   </div>
@@ -119,7 +119,7 @@ function buildHeader(){
       </div>
       <a class="brand" href="index.html" aria-label="miperfumeria — inicio">${logoSVG()}</a>
       <div class="header-actions">
-        <a class="hicon" href="cuenta.html">${ICON.user}<span>Mi cuenta</span></a>
+        <a class="hicon" href="cuenta.html">${ICON.user}<span>Mi compra</span></a>
         <a class="hicon" href="catalogo.html">${ICON.fav}<span class="sr">Favoritos</span></a>
         <button class="hicon" data-open="cart">${ICON.bolsa}<span class="sr">Bolsa</span><em class="cart-count" id="cartCount">0</em></button>
       </div>
@@ -164,8 +164,7 @@ function buildFooter(){
   <div class="wrap">
     <div class="footer-social">
       <a href="${TIENDA.instagram}" target="_blank" rel="noopener" aria-label="Instagram">${ICON.ig}</a>
-      <a href="#" aria-label="Facebook">${ICON.fb}</a>
-      <a href="#" aria-label="TikTok">${ICON.tk}</a>
+      <a href="${TIENDA.tiktok}" target="_blank" rel="noopener" aria-label="TikTok">${ICON.tk}</a>
     </div>
     <div class="footer-cols">
       ${cols.map(c=>`
@@ -176,7 +175,7 @@ function buildFooter(){
       </div>`).join("")}
     </div>
     <div class="footer-contact">
-      <div><b>Atención a clientes</b><p>WhatsApp e Instagram directo<br>Lunes a sábado, 10:00 a 20:00 h</p></div>
+      <div><b>Atención a clientes</b><p>WhatsApp e Instagram directo<br>Consulta disponibilidad y coordina tu entrega</p></div>
       <div><b>Envíos</b><p>Guías con ${TIENDA.paqueteria}: Estafeta, FedEx, DHL, Paquetexpress y Redpack<br>Envío gratis desde 3 piezas</p></div>
       <div><b>Síguenos</b><p><a href="${TIENDA.instagram}" target="_blank" rel="noopener">${TIENDA.instagramUser}</a><br>Nuevas llegadas y disponibilidad diaria</p></div>
     </div>

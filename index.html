@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>miperfumeria | Perfumes originales con envío a todo México</title>
 <meta name="description" content="Perfumes 100% originales de diseñador y árabes. Envío gratis desde 3 piezas, precio de mayoreo desde $4,000 y garantía de autenticidad.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%23101C3A%27/%3E%3Ctext x=%2732%27 y=%2745%27 font-family=%27Georgia,serif%27 font-size=%2736%27 font-style=%27italic%27 fill=%27%23ffffff%27 text-anchor=%27middle%27%3EM%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&family=Playfair+Display:ital,wght@0,500;1,400;1,500&display=swap" rel="stylesheet">
@@ -19,10 +18,10 @@
   <div class="hero-slide is-on">
     <div class="hero-bg" data-bg="navy"></div>
     <div class="hero-inner"><div class="hero-copy">
-      <div class="eyebrow">Los más vendidos</div>
-      <h2>Hawas Ice</h2>
-      <p>El favorito de la tienda. Salida helada y cítrica, fondo ambarado y hasta 10 horas de duración.</p>
-      <a class="btn btn-light" href="producto.html?id=hawas-ice">Comprar ahora</a>
+      <div class="eyebrow">Rasasi · Nueva selección</div>
+      <h2>Hawas<br>Chrome</h2>
+      <p>Una nueva presencia en tu colección.<br>Eau de Parfum · 100 ml · <strong>$899</strong></p>
+      <a class="btn btn-light" href="producto.html?id=hawas-chrome">Descubrir fragancia</a>
     </div></div>
   </div>
   <div class="hero-slide">
@@ -62,6 +61,12 @@
   </div>
 </div>
 
+<section class="inventory-section">
+  <div class="wrap">
+    <div class="section-heading-row"><div><div class="eyebrow">La selección del momento</div><h2 class="sec-title">Disponible ahora</h2></div><a class="link-more" href="catalogo.html?f=inventario">Ver modelos disponibles ↗</a></div>
+    <div class="rail-wrap"><button class="rail-btn prev" aria-label="Anterior">‹</button><div class="rail" id="railStock"></div><button class="rail-btn next" aria-label="Siguiente">›</button></div>
+  </div>
+</section>
 <!-- ============ MÁS VENDIDOS ============ -->
 <section>
   <div class="wrap">
@@ -135,15 +140,15 @@
 <!-- ============ FORMAS DE PAGO ============ -->
 <section>
   <div class="wrap">
-    <div class="sec-head"><h2 class="sec-title">Paga como te acomode</h2>
-      <p class="sec-sub">Sin complicaciones y sin cargos extra</p></div>
+    <div class="sec-head"><h2 class="sec-title">Compra fácil, atención personal</h2>
+      <p class="sec-sub">Elige tu perfume y continúa por WhatsApp</p></div>
     <div class="pay-strip">
       <div class="pay-card"><div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="6" width="20" height="12"/><circle cx="12" cy="12" r="2.6"/></svg></div>
-        <h4>Efectivo</h4><p>Pago en efectivo al momento de la entrega en zona local o en punto acordado.</p></div>
+        <h4>Compra por WhatsApp</h4><p>Abre un mensaje con el perfume y la cantidad que quieres comprar.</p></div>
       <div class="pay-card"><div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 10l9-5 9 5"/><path d="M5 10v8M10 10v8M14 10v8M19 10v8"/><path d="M3 21h18"/></svg></div>
         <h4>Transferencia</h4><p>SPEI desde cualquier banco. Confirmamos tu pedido en cuanto entra el pago.</p></div>
       <div class="pay-card"><div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="5" width="20" height="14"/><path d="M2 10h20"/></svg></div>
-        <h4>Depósito</h4><p>En ventanilla o en tiendas de conveniencia. Solo envías tu comprobante.</p></div>
+        <h4>Envía tu comprobante</h4><p>Adjúntalo en WhatsApp para que el dueño revise el pago y coordine la entrega.</p></div>
       <div class="pay-card"><div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg></div>
         <h4>Envíos Skydrop</h4><p>Guías con las principales paqueterías del país y número de rastreo siempre.</p></div>
     </div>
@@ -245,13 +250,14 @@
 <script src="assets/js/app.js"></script>
 <script>
 function pageInit(){
+  renderCards(PRODUCTOS.filter(p=>p.stock>0), "#railStock");
   renderCards(PRODUCTOS.filter(p=>p.best), "#railBest");
-  renderCards(PRODUCTOS.filter(p=>p.nuevo).concat(PRODUCTOS.slice(6,12)).slice(0,8), "#railNuevo");
+  renderCards(PRODUCTOS.filter(p=>p.nuevo).slice(0,11), "#railNuevo");
   renderCards(PRODUCTOS.filter(p=>p.oferta || (p.lista && (1-p.precio/p.lista) >= .2)).slice(0,4), "#gridOferta");
 
   // marcas destacadas
-  const marcas = [["Rasasi","Hasta -24%"],["Armaf","Hasta -23%"],["Lattafa","Hasta -25%"],
-                  ["Azzaro","Hasta -21%"],["Dior","Originales"],["Carolina Herrera","Hasta -15%"]];
+  const marcas = [["Rasasi","Hawas Collection"],["Armaf","Odyssey & Club de Nuit"],["Lattafa","Dynasty & Fakhar"],
+                  ["Azzaro","The Most Wanted"],["Afnan","9PM"],["Versace","Dylan Blue"]];
   document.querySelector("#brandGrid").innerHTML = marcas.map(m=>
     `<a class="brand-card" href="catalogo.html?m=${encodeURIComponent(m[0])}"><b>${m[0]}</b><span>${m[1]}</span></a>`).join("");
 
