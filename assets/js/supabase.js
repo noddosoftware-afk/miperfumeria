@@ -80,6 +80,25 @@ const sbProducts = {
   }
 };
 
+/* Fotografías de producto: se suben al almacenamiento de Supabase (bucket público "productos")
+   y en la base sólo se guarda la URL, no la imagen completa. */
+const sbStorage = {
+  async uploadProductImage(file, productId){
+    const session = sbSession();
+    if(!(session && session.access_token && session.expires_at > Date.now())) throw new Error('Inicia sesión para subir fotografías.');
+    const ext = ({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'})[file.type];
+    if(!ext) throw new Error('Usa PNG, JPG o WebP.');
+    const path = (productId || 'producto-' + Date.now()) + '-' + Date.now() + '.' + ext;
+    const res = await fetch(SB_URL + '/storage/v1/object/productos/' + path, {
+      method: 'POST',
+      headers: {apikey: SB_ANON, Authorization: 'Bearer ' + session.access_token, 'Content-Type': file.type, 'x-upsert': 'true'},
+      body: file
+    });
+    if(!res.ok) throw new Error('No se pudo subir la fotografía: ' + (await res.text().catch(()=>res.status)));
+    return SB_URL + '/storage/v1/object/public/productos/' + path;
+  }
+};
+
 const sbOrders = {
   async fetchAll(){ return (await sbRequest('/rest/v1/orders?select=*&order=created_at.desc')).map(dbToOrder); },
   async upsert(order){
