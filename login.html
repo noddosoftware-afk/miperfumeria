@@ -1,0 +1,31 @@
+<!doctype html><html lang="es-MX"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Acceso al panel | miperfumeria</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap"><link rel="stylesheet" href="assets/css/admin.css"><style>body{display:flex;align-items:center;justify-content:center;min-height:100vh}.login-card{background:white;border:1px solid var(--line);border-radius:10px;padding:36px;width:min(380px,92vw)}.login-brand{font-family:Montserrat,sans-serif;font-weight:800;font-size:20px;letter-spacing:-.6px;color:var(--navy);margin:0 0 4px}.login-card p.sub{color:var(--muted);font-size:13px;margin:0 0 26px}.login-card label{display:grid;gap:7px;font-size:12px;margin-bottom:16px}.login-card button{width:100%;margin-top:6px}#loginError{color:#a22b39;font-size:13px;min-height:20px;margin:0 0 6px}</style></head><body>
+<div class="login-card">
+  <p class="login-brand">MI PERFUMERIA</p>
+  <p class="sub">Panel de la tienda — acceso administrador</p>
+  <form id="loginForm">
+    <label>Correo<input type="email" name="email" autocomplete="username" required></label>
+    <label>Contraseña<input type="password" name="password" autocomplete="current-password" required></label>
+    <p id="loginError" role="alert"></p>
+    <button class="primary" type="submit">Entrar</button>
+  </form>
+</div>
+<script src="assets/js/supabase.js"></script>
+<script>
+if(sbAuth.isAuthenticated()) location.href = 'admin.html';
+document.getElementById('loginForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const err = document.getElementById('loginError');
+  err.textContent = '';
+  const btn = e.target.querySelector('button');
+  const fd = new FormData(e.target);
+  btn.disabled = true; btn.textContent = 'Entrando…';
+  try{
+    await sbAuth.signIn(fd.get('email').trim(), fd.get('password'));
+    location.href = 'admin.html';
+  }catch(ex){
+    err.textContent = 'Correo o contraseña incorrectos.';
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+});
+</script>
+</body></html>

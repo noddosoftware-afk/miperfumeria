@@ -5,7 +5,8 @@
    ========================================================= */
 
 /* ---------- montaje del layout ---------- */
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  if (typeof loadLiveProducts === "function") await loadLiveProducts();
   const h = document.getElementById("site-header");
   const f = document.getElementById("site-footer");
   if (h) h.innerHTML = buildHeader();
