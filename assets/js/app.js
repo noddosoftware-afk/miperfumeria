@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderCart();
   if (typeof pageInit === "function") pageInit();
   mountDelivery();
+  if (typeof apartadoRestante === "function" && apartadoRestante() > 0) startHoldTicker();
 });
 
 /* ---------- utilidades ---------- */
@@ -169,7 +170,7 @@ function renderCart(){
   } else {
     const piezas = cartCount();
     const faltan = Math.max(0, TIENDA.envioGratisPiezas - piezas);
-    body.innerHTML = `
+    body.innerHTML = apartadoBanner() + `
       <div class="ship-bar">
         ${faltan ? `Agrega <b>${faltan}</b> pieza${faltan>1?"s":""} más y tu envío es <b>gratis</b>.`
                  : `<b>¡Listo!</b> Tu envío es gratis.`}
@@ -211,7 +212,16 @@ function changeQty(id, d){
   i.q += d; if(i.q < 1) return removeItem(id);
   setCart(c);
 }
-function removeItem(id){ setCart(getCart().filter(i=>i.id!==id)); }
+function removeItem(id){
+  const rest = getCart().filter(i=>i.id!==id);
+  setCart(rest);
+  // La bolsa quedó vacía: devolvemos de inmediato lo apartado al catálogo.
+  if(!rest.length && typeof sbReservations !== 'undefined' && apartadoRestante() > 0){
+    sbReservations.release().catch(()=>{});
+    MI_APARTADO = {expira: null, piezas: {}};
+    clearInterval(HOLD_TICKER);
+  }
+}
 
 /* ---------- catálogo (PLP) ---------- */
 function filtrar(){
@@ -293,6 +303,60 @@ function purchaseActions(items,id=null){
   return `<a class="btn btn-block wa-buy" data-purchase="${encodeURIComponent(JSON.stringify(clean))}" href="${purchaseURL(clean)}" target="_blank" rel="noopener">Continuar compra por WhatsApp</a>
     <a class="btn btn-block btn-ghost transfer-buy" href="${transfer}">Ver cuenta de transferencia</a>`;
 }
+/* ---------- apartado temporal ----------
+   Al pulsar "Continuar compra por WhatsApp" las piezas se apartan 30 minutos.
+   El contador es informativo: la base libera el apartado sola al vencer. */
+function apartadoRestante(){
+  const exp = typeof MI_APARTADO !== 'undefined' ? MI_APARTADO.expira : null;
+  if(!exp) return 0;
+  return Math.max(0, Math.floor((new Date(exp) - Date.now())/1000));
+}
+function apartadoTexto(){
+  const s = apartadoRestante(); if(!s) return '';
+  const m = Math.floor(s/60), r = s%60;
+  return m + ':' + String(r).padStart(2,'0');
+}
+function apartadoBanner(){
+  const t = apartadoTexto(); if(!t) return '';
+  return `<div class="hold-bar" id="holdBar">Tus piezas están apartadas <b>${t}</b> más.
+    <span class="hold-note">Si la compra no se concreta, vuelven al catálogo.</span></div>`;
+}
+async function apartarBolsa(items){
+  if(typeof sbReservations === 'undefined') return;
+  try{
+    const res = await sbReservations.reserve(items);
+    if(res && res.expira){
+      MI_APARTADO.expira = res.expira;
+      (res.articulos||[]).forEach(a => { if(a.apartado) MI_APARTADO.piezas[a.id] = a.apartado; });
+      const corto = (res.articulos||[]).filter(a => a.apartado < a.solicitado);
+      if(corto.length) toast('Alguien más está comprando parte de lo que pediste; se apartó lo disponible.');
+      else toast('Tus piezas quedan apartadas 30 minutos.');
+      renderCart();
+      startHoldTicker();
+    }
+  }catch(e){ console.warn('No se pudo apartar el inventario.', e); }
+}
+let HOLD_TICKER = null;
+function startHoldTicker(){
+  clearInterval(HOLD_TICKER);
+  HOLD_TICKER = setInterval(async () => {
+    const bar = document.getElementById('holdBar');
+    if(apartadoRestante() <= 0){
+      clearInterval(HOLD_TICKER);
+      MI_APARTADO = {expira: null, piezas: {}};
+      if(typeof applyAvailability === 'function') await applyAvailability();
+      renderCart();
+      return;
+    }
+    if(bar) bar.innerHTML = `Tus piezas están apartadas <b>${apartadoTexto()}</b> más.
+      <span class="hold-note">Si la compra no se concreta, vuelven al catálogo.</span>`;
+  }, 1000);
+}
+document.addEventListener('click', e => {
+  const a = e.target.closest('a.wa-buy'); if(!a) return;
+  try{ apartarBolsa(JSON.parse(decodeURIComponent(a.dataset.purchase || '[]'))); }catch{}
+}, true);
+
 function selectedPurchase(){
   const id=params().get('id');
   if(id){const raw=params().get('qty');const qty=raw===null?1:Number(raw);return purchaseItems([{id,q:qty}]);}

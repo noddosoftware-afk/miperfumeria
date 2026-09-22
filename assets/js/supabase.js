@@ -99,6 +99,46 @@ const sbStorage = {
   }
 };
 
+/* Apartado temporal de inventario. Cuando alguien inicia la compra, sus piezas
+   quedan reservadas 30 minutos en la base; si no concreta, se liberan solas.
+   La tabla no se toca directamente: todo pasa por funciones del servidor. */
+const APARTADO_MINUTOS = 30;
+const sbReservations = {
+  sessionId(){
+    let s = null;
+    try{ s = localStorage.getItem('mp_reserva_sesion'); }catch{}
+    if(!s || s.length < 8){
+      s = 'mp-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+      try{ localStorage.setItem('mp_reserva_sesion', s); }catch{}
+    }
+    return s;
+  },
+  async availability(){
+    return await sbRequest('/rest/v1/rpc/availability', {
+      method: 'POST', body: JSON.stringify({p_session: this.sessionId()})
+    });
+  },
+  async reserve(items){
+    const clean = (items || [])
+      .filter(i => i && i.id && Number.isInteger(i.q) && i.q > 0)
+      .map(i => ({id: i.id, q: Math.min(i.q, 10)}))
+      .slice(0, 20);
+    if(!clean.length) return null;
+    return await sbRequest('/rest/v1/rpc/reserve_items', {
+      method: 'POST',
+      body: JSON.stringify({p_session: this.sessionId(), p_items: clean, p_minutes: APARTADO_MINUTOS})
+    });
+  },
+  async release(){
+    return await sbRequest('/rest/v1/rpc/release_reservation', {
+      method: 'POST', body: JSON.stringify({p_session: this.sessionId()})
+    });
+  },
+  /* Panel del dueño: ver y liberar apartados a mano. Requiere sesión. */
+  async adminList(){ return await sbRequest('/rest/v1/rpc/admin_reservations', {method: 'POST', body: '{}'}); },
+  async adminRelease(id){ return await sbRequest('/rest/v1/rpc/admin_release', {method: 'POST', body: JSON.stringify({p_id: id})}); }
+};
+
 const sbOrders = {
   async fetchAll(){ return (await sbRequest('/rest/v1/orders?select=*&order=created_at.desc')).map(dbToOrder); },
   async upsert(order){
