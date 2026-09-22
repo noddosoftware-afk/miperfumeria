@@ -21,8 +21,9 @@ async function sbRequest(path, opts={}){
     const text = await res.text().catch(()=>'');
     throw new Error('Supabase ' + res.status + ': ' + text);
   }
-  if(res.status === 204) return null;
-  return res.json();
+  const text = await res.text();
+  if(!text) return null;
+  try{ return JSON.parse(text); }catch{ return null; }
 }
 
 const sbAuth = {
