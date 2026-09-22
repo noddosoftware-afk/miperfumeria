@@ -2,3 +2,8 @@ _backup_nextjs/
 .DS_Store
 .vercel
 .env*
+
+# Secretos del servidor (nunca se suben)
+.env
+.env.*
+supabase/.env*
