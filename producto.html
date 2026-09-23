@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Producto | miperfumeria</title>
+<meta name="description" content="Perfume 100% original con garantía de autenticidad. Envío gratis desde 3 piezas y precio de mayoreo disponible.">
+<meta property="og:type" content="product">
+<meta property="og:site_name" content="miperfumeria">
+<meta property="og:title" content="Producto | miperfumeria">
+<meta property="og:description" content="Perfume 100% original con garantía de autenticidad. Envío gratis desde 3 piezas y precio de mayoreo disponible.">
+<meta property="og:image" content="https://www.miperfumeria.com.mx/assets/img/editorial/hero-chrome.webp">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700;800&family=Playfair+Display:ital,wght@0,500;1,400;1,500&display=swap" rel="stylesheet">
@@ -56,6 +63,22 @@ function pageInit(){
   const p = byId(id) || PRODUCTOS[0];
   const off = p.lista ? Math.round((1 - p.precio/p.lista)*100) : 0;
   document.title = p.marca + " " + p.nombre + " | miperfumeria";
+  (function setMeta(){
+    const titulo = p.marca + " " + p.nombre + " | miperfumeria";
+    const desc = (p.desc || (p.marca + " " + p.nombre + ", perfume 100% original. Envío gratis desde 3 piezas y precio de mayoreo disponible.")).slice(0, 160);
+    const url = location.origin + location.pathname + "?id=" + encodeURIComponent(p.id);
+    const set = (sel, attr, val) => { const el = document.querySelector(sel); if(el) el.setAttribute(attr, val); };
+    set('meta[name="description"]', "content", desc);
+    set('meta[property="og:title"]', "content", titulo);
+    set('meta[property="og:description"]', "content", desc);
+    set('meta[property="og:image"]', "content", location.origin + "/" + p.imagen);
+    let og = document.querySelector('meta[property="og:url"]');
+    if(!og){ og = document.createElement("meta"); og.setAttribute("property", "og:url"); document.head.appendChild(og); }
+    og.setAttribute("content", url);
+    let canon = document.querySelector('link[rel="canonical"]');
+    if(!canon){ canon = document.createElement("link"); canon.setAttribute("rel", "canonical"); document.head.appendChild(canon); }
+    canon.setAttribute("href", url);
+  })();
 
   document.querySelector("#crumb").innerHTML =
     `<a href="index.html">Inicio</a> / <a href="catalogo.html?f=${p.cat}">${p.cat==="arabe"?"Perfumes árabes":"Diseñador"}</a>

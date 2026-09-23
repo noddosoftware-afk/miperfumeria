@@ -1,20 +1,24 @@
 /* Conexión con Skydropx para miperfumeria.
-   Vive en el servidor: la llave de Skydropx nunca viaja al navegador ni al repositorio.
+   Vive en el servidor: las credenciales de Skydropx nunca viajan al navegador ni al repositorio.
    Sólo responde a una sesión del panel (rol authenticated); el público no la puede usar.
 
    Acciones:
      cotizar    { cp_destino, estado?, ciudad?, piezas? }  -> tarifas disponibles
-     crear_guia { pedido, cp_destino, estado, ciudad, calle, nombre, telefono, rate_id, piezas? }
-     rastrear   { shipment_id }
+     crear_guia { pedido, cp_destino, estado, ciudad, calle, nombre, telefono, quotation_id, rate_id, carrier_name, piezas? }
+     rastrear   { tracking_number, carrier_name }
 
    Secretos que necesita (Supabase → Edge Functions → Secrets):
-     SKYDROPX_API_KEY
+     SKYDROPX_CLIENT_ID, SKYDROPX_CLIENT_SECRET
      SKYDROPX_CP_ORIGEN, SKYDROPX_ESTADO_ORIGEN, SKYDROPX_CIUDAD_ORIGEN,
      SKYDROPX_CALLE_ORIGEN, SKYDROPX_NOMBRE_ORIGEN, SKYDROPX_TELEFONO_ORIGEN, SKYDROPX_EMAIL_ORIGEN
+
+   Skydropx Pro API (docs.skydropx.com -> pro.skydropx.com/api-docs):
+     Base: https://pro.skydropx.com/api/v1
+     Auth: OAuth2 client_credentials -> POST /oauth/token, Bearer token vigente 2 horas.
 */
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-const API = "https://api.skydropx.com/v1";
+const API = "https://pro.skydropx.com/api/v1";
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, apikey, content-type",
@@ -23,7 +27,7 @@ const cors = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 
-/* El JWT ya viene verificado por la plataforma; aquí sólo leemos el rol. */
+/* El JWT de la sesión del panel ya viene verificado por la plataforma; aquí sólo leemos el rol. */
 function rolDe(req: Request): string {
   try {
     const raw = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
@@ -42,7 +46,6 @@ function origen() {
     postal_code: cp,
     area_level1: Deno.env.get("SKYDROPX_ESTADO_ORIGEN") || "",
     area_level2: Deno.env.get("SKYDROPX_CIUDAD_ORIGEN") || "",
-    area_level3: Deno.env.get("SKYDROPX_CIUDAD_ORIGEN") || "",
     street1: Deno.env.get("SKYDROPX_CALLE_ORIGEN") || "",
     name: Deno.env.get("SKYDROPX_NOMBRE_ORIGEN") || "miperfumeria",
     phone: Deno.env.get("SKYDROPX_TELEFONO_ORIGEN") || "",
@@ -58,13 +61,38 @@ function paquetes(piezas = 1) {
   }));
 }
 
+/* Token OAuth2 cacheado en memoria mientras el isolate siga caliente; se renueva solo. */
+let cachedToken: { token: string; expira: number } | null = null;
+
+async function oauthToken(): Promise<string> {
+  if (cachedToken && cachedToken.expira > Date.now() + 30_000) return cachedToken.token;
+  const clientId = Deno.env.get("SKYDROPX_CLIENT_ID");
+  const clientSecret = Deno.env.get("SKYDROPX_CLIENT_SECRET");
+  if (!clientId || !clientSecret) {
+    throw new Error("Faltan SKYDROPX_CLIENT_ID / SKYDROPX_CLIENT_SECRET en los secretos del proyecto.");
+  }
+  const res = await fetch(API + "/oauth/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, grant_type: "client_credentials" }),
+  });
+  const texto = await res.text();
+  let cuerpo: Record<string, unknown> = {};
+  try { cuerpo = texto ? JSON.parse(texto) : {}; } catch { /* cuerpo no era json */ }
+  if (!res.ok) throw new Error("Skydropx OAuth " + res.status + ": " + texto.slice(0, 300));
+  const token = String(cuerpo.access_token || "");
+  const dura = Number(cuerpo.expires_in || 7200);
+  if (!token) throw new Error("Skydropx no regresó un token válido.");
+  cachedToken = { token, expira: Date.now() + dura * 1000 };
+  return token;
+}
+
 async function skydropx(path: string, init: RequestInit = {}) {
-  const key = Deno.env.get("SKYDROPX_API_KEY");
-  if (!key) throw new Error("Falta SKYDROPX_API_KEY en los secretos del proyecto.");
+  const token = await oauthToken();
   const res = await fetch(API + path, {
     ...init,
     headers: {
-      Authorization: "Token token=" + key,
+      Authorization: "Bearer " + token,
       "Content-Type": "application/json",
       ...(init.headers || {}),
     },
@@ -89,10 +117,18 @@ Deno.serve(async (req) => {
 
   try {
     if (accion === "estado") {
-      // Diagnóstico: dice si ya están cargados los secretos, sin revelarlos.
+      // Diagnóstico: dice si ya están cargados los secretos y si el token OAuth se obtiene, sin revelar nada.
+      const credenciales = !!Deno.env.get("SKYDROPX_CLIENT_ID") && !!Deno.env.get("SKYDROPX_CLIENT_SECRET");
+      let conecta = false;
+      let detalle: string | null = null;
+      if (credenciales) {
+        try { await oauthToken(); conecta = true; } catch (e) { detalle = (e as Error).message; }
+      }
       return json({
-        llave: !!Deno.env.get("SKYDROPX_API_KEY"),
+        credenciales,
         origen: !!Deno.env.get("SKYDROPX_CP_ORIGEN"),
+        conecta,
+        detalle,
       });
     }
 
@@ -102,54 +138,54 @@ Deno.serve(async (req) => {
       const data = await skydropx("/quotations", {
         method: "POST",
         body: JSON.stringify({
-          quotation: {
-            address_from: origen(),
-            address_to: {
-              country_code: "MX",
-              postal_code: cp,
-              area_level1: limpio(body.estado),
-              area_level2: limpio(body.ciudad),
-            },
-            parcels: paquetes(Number(body.piezas) || 1),
+          address_from: origen(),
+          address_to: {
+            country_code: "MX",
+            postal_code: cp,
+            area_level1: limpio(body.estado),
+            area_level2: limpio(body.ciudad),
           },
+          parcels: paquetes(Number(body.piezas) || 1),
         }),
       });
+      const quotationId = (data?.data as Record<string, any>)?.id ?? data?.id ?? null;
       const rates = (data?.included as Array<Record<string, any>> | undefined)
         ?.filter((r) => r.type === "rates")
         ?.map((r) => ({
           id: r.id,
           paqueteria: r.attributes?.provider,
+          carrier_name: r.attributes?.provider,
           servicio: r.attributes?.service_level_name,
           dias: r.attributes?.days,
           costo: Number(r.attributes?.total_pricing ?? 0),
         }))
         ?.sort((a, b) => a.costo - b.costo) ?? [];
-      return json({ tarifas: rates });
+      return json({ quotation_id: quotationId, tarifas: rates });
     }
 
     if (accion === "crear_guia") {
-      const cp = limpio(body.cp_destino, 5);
+      const quotationId = limpio(body.quotation_id, 60);
       const rate = limpio(body.rate_id, 60);
-      if (!/^\d{5}$/.test(cp) || !rate) return json({ error: "Falta el código postal o la tarifa elegida." }, 400);
+      const carrier = limpio(body.carrier_name, 40);
+      if (!quotationId || !rate || !carrier) {
+        return json({ error: "Falta la cotización, la tarifa o la paquetería elegida." }, 400);
+      }
       const data = await skydropx("/shipments", {
         method: "POST",
         body: JSON.stringify({
-          shipment: {
-            rate_id: rate,
-            reference: limpio(body.pedido, 40),
-            address_from: origen(),
-            address_to: {
-              country_code: "MX",
-              postal_code: cp,
-              area_level1: limpio(body.estado),
-              area_level2: limpio(body.ciudad),
-              street1: limpio(body.calle, 200),
-              name: limpio(body.nombre),
-              phone: limpio(body.telefono, 20),
-              email: limpio(body.email),
-              reference: limpio(body.referencia, 200),
-            },
-            parcels: paquetes(Number(body.piezas) || 1),
+          quotation_id: quotationId,
+          rate_id: rate,
+          carrier_name: carrier,
+          reference: limpio(body.pedido, 40),
+          address_to: {
+            country_code: "MX",
+            postal_code: limpio(body.cp_destino, 5),
+            area_level1: limpio(body.estado),
+            area_level2: limpio(body.ciudad),
+            street1: limpio(body.calle, 200),
+            name: limpio(body.nombre),
+            phone: limpio(body.telefono, 20),
+            email: limpio(body.email),
           },
         }),
       });
@@ -157,18 +193,22 @@ Deno.serve(async (req) => {
       return json({
         shipment_id: (data?.data as Record<string, any>)?.id ?? null,
         guia: a.tracking_number ?? null,
-        paqueteria: a.provider ?? null,
+        paqueteria: a.provider ?? carrier,
         etiqueta: a.label_url ?? null,
         rastreo: a.tracking_url_provider ?? null,
       });
     }
 
     if (accion === "rastrear") {
-      const id = limpio(body.shipment_id, 60);
-      if (!id) return json({ error: "Falta el envío a rastrear." }, 400);
-      const data = await skydropx("/shipments/" + encodeURIComponent(id));
+      const guia = limpio(body.tracking_number, 60);
+      const carrier = limpio(body.carrier_name, 40);
+      if (!guia || !carrier) return json({ error: "Falta el número de guía o la paquetería." }, 400);
+      const data = await skydropx(
+        "/shipments/tracking/" + encodeURIComponent(guia) +
+          "?tracking_number=" + encodeURIComponent(guia) + "&carrier_name=" + encodeURIComponent(carrier),
+      );
       const a = (data?.data as Record<string, any>)?.attributes ?? {};
-      return json({ estado: a.status ?? null, guia: a.tracking_number ?? null, rastreo: a.tracking_url_provider ?? null });
+      return json({ estado: a.status ?? null, guia: a.tracking_number ?? guia, rastreo: a.tracking_url_provider ?? null });
     }
 
     return json({ error: "Acción no reconocida." }, 400);

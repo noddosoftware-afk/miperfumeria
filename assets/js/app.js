@@ -164,7 +164,7 @@ function renderCart(){
   if(!body) return;
 
   if(!c.length){
-    body.innerHTML = `<div class="empty-state"><p>Tu bolsa está vacía.</p>
+    body.innerHTML = apartadoBanner() + `<div class="empty-state"><p>Tu bolsa está vacía.</p>
       <a class="btn btn-ghost btn-sm" href="catalogo.html">Ver catálogo</a></div>`;
     foot.innerHTML = "";
   } else {
