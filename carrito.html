@@ -78,7 +78,7 @@ function pintarPagina(){
   }).join("");
 
   const piezas = cartCount(), sub = cartTotal();
-  const envio = !piezas || piezas >= TIENDA.envioGratisPiezas ? 0 : 199;
+  const envio = !piezas || piezas >= TIENDA.envioGratisPiezas ? 0 : 149;
   const mayoreo = cartWholesale();
   sum.innerHTML = `
     <h3>Resumen</h3>

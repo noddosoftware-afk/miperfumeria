@@ -195,7 +195,7 @@ function renderCart(){
     }).join("");
 
     const sub = cartTotal();
-    const envio = piezas >= TIENDA.envioGratisPiezas ? 0 : 199;
+    const envio = piezas >= TIENDA.envioGratisPiezas ? 0 : 149;
     foot.innerHTML = `
       <div class="sum-row"><span>Subtotal (${piezas} pza)</span><span>${MONEDA(sub)}</span></div>
       <div class="sum-row"><span>${deliveryData().method==='personal'?'Entrega personal':'Envío'}</span><span>${deliveryData().method==='personal'?'Por confirmar':envio? MONEDA(envio) : 'Gratis'}</span></div>
@@ -278,7 +278,7 @@ function purchaseQuote(items){
   const lines=clean.map(i=>{const p=byId(i.id);return {...i,p,unit:wholesale&&p.mayoreo?p.mayoreo:p.precio};});
   const units=lines.reduce((s,i)=>s+i.q,0);
   const subtotal=lines.reduce((s,i)=>s+i.unit*i.q,0);
-  const shipping=units && units<TIENDA.envioGratisPiezas?199:0;
+  const shipping=units && units<TIENDA.envioGratisPiezas?149:0;
   return {lines,units,subtotal,shipping,total:subtotal+shipping,wholesale};
 }
 function purchaseMessage(items,receipt=false){
@@ -388,7 +388,7 @@ function mountDelivery(){
 }
 function refreshDelivery(){
  document.querySelectorAll('[data-purchase]').forEach(a=>{try{a.href=purchaseURL(JSON.parse(decodeURIComponent(a.dataset.purchase)),a.dataset.receipt==='true');}catch{}});
- const note=document.getElementById('deliveryExplanation');if(note)note.textContent=deliveryData().method==='personal'?'El dueño confirmará cobertura, costo y horario. La hora indicada es una solicitud.':'Paquetería: $199, gratis desde 3 piezas. El tiempo de llegada se confirma según destino.';
+ const note=document.getElementById('deliveryExplanation');if(note)note.textContent=deliveryData().method==='personal'?'El dueño confirmará cobertura, costo y horario. La hora indicada es una solicitud.':'Paquetería: $149, gratis desde 3 piezas. El tiempo de llegada se confirma según destino.';
  const schedule=document.querySelector('#deliveryChoice [name="schedule"]');if(schedule)schedule.disabled=deliveryData().method!=='personal';
  renderCart();
 }
