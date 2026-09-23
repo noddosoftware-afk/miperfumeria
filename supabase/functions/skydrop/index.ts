@@ -63,10 +63,11 @@ function origenContacto() {
   };
 }
 
-/* Una caja por cada tres perfumes; medidas conservadoras de una caja chica. */
-function paquetes(piezas = 1) {
+/* Una sola caja por pedido; el peso sube un poco por cada 3 perfumes adicionales.
+   Medidas conservadoras de una caja chica (cm) y peso en kg. */
+function paquete(piezas = 1) {
   const cajas = Math.max(1, Math.ceil(piezas / 3));
-  return Array.from({ length: cajas }, () => ({ weight: 1, length: 25, width: 20, height: 15 })); // kg y cm
+  return { weight: cajas, length: 25, width: 20, height: 15 };
 }
 
 /* Token OAuth2 cacheado en memoria mientras el isolate siga caliente; se renueva solo. */
@@ -147,7 +148,7 @@ Deno.serve(async (req) => {
           quotation: {
             address_from: origenDireccion(),
             address_to: { country_code: "MX", postal_code: cp, area_level1: estado, area_level2: ciudad, area_level3: colonia },
-            packages: paquetes(Number(body.piezas) || 1),
+            parcel: paquete(Number(body.piezas) || 1),
           },
         }),
       });
@@ -155,8 +156,8 @@ Deno.serve(async (req) => {
       if (!quotationId) throw new Error("Skydropx no regresó un id de cotización.");
 
       let resultado: Record<string, any> = creada as Record<string, any>;
-      for (let intento = 0; intento < 8 && !resultado.is_completed; intento++) {
-        await sleep(1800);
+      for (let intento = 0; intento < 10 && !resultado.is_completed; intento++) {
+        await sleep(2000);
         resultado = await skydropx("/quotations/" + encodeURIComponent(quotationId)) as Record<string, any>;
       }
       if (!resultado.is_completed) return json({ quotation_id: quotationId, tarifas: [], pendiente: true });
@@ -195,13 +196,13 @@ Deno.serve(async (req) => {
         }),
       });
       const envio = (data?.data as Record<string, any>) ?? {};
-      const paquete = ((data?.included as Array<Record<string, any>> | undefined) ?? [])[0]?.attributes ?? {};
+      const paqueteEnvio = ((data?.included as Array<Record<string, any>> | undefined) ?? [])[0]?.attributes ?? {};
       return json({
         shipment_id: envio.id ?? null,
         estado: envio.attributes?.workflow_status ?? null,
-        guia: paquete.tracking_number ?? null,
-        etiqueta: paquete.label_url ?? null,
-        rastreo: paquete.tracking_url_provider ?? null,
+        guia: paqueteEnvio.tracking_number ?? null,
+        etiqueta: paqueteEnvio.label_url ?? null,
+        rastreo: paqueteEnvio.tracking_url_provider ?? null,
       });
     }
 
