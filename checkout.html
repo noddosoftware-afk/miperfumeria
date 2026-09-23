@@ -94,14 +94,15 @@ function renderTransfer(){
     <div id="envioReal"></div>
     <div class="sum-row total"><span>${deliveryData().method==='personal'?'Subtotal sin entrega':'Total con paquetería'}</span><span>${MONEDA(deliveryData().method==='personal'?q.subtotal:q.total)}</span></div>
     <p class="purchase-note">Precios en MXN. Para entrega personal, acuerda ubicación, costo y horario por WhatsApp.</p>`;
-  actualizarEnvioReal(q.units);
+  if(sbAuth.isAuthenticated()) actualizarEnvioReal(q.units);
 }
 /* Cotización real con Skydropx cuando ya hay CP, estado, ciudad y colonia.
-   Solo informativa: el total de arriba sigue siendo el estimado fijo hasta
-   que se conecte el pago en línea; aquí solo se muestra el costo real. */
+   Oculta para clientes por ahora (sólo informativa para Damián mientras se
+   conecta el pago en línea): sólo se calcula y se muestra si hay sesión de
+   admin (mp_session) en este navegador — el cliente nunca la ve. */
 let ultimaCotizacion=null;
 async function actualizarEnvioReal(piezas){
-  const box=document.getElementById('envioReal');if(!box)return;
+  const box=document.getElementById('envioReal');if(!box||!sbAuth.isAuthenticated())return;
   const d=deliveryData();
   if(d.method!=='paqueteria'||!d.postcode||!d.estado||!d.city||!d.colonia){box.innerHTML='';ultimaCotizacion=null;return;}
   const clave=[d.postcode,d.estado,d.city,d.colonia,piezas||1].join('|');
