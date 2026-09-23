@@ -304,8 +304,10 @@ function purchaseActions(items,id=null){
     <a class="btn btn-block btn-ghost transfer-buy" href="${transfer}">Ver cuenta de transferencia</a>`;
 }
 /* ---------- apartado temporal ----------
-   Al pulsar "Continuar compra por WhatsApp" o "Ver cuenta de transferencia"
-   las piezas se apartan 5 minutos. El contador es informativo: la base
+   Al confirmar el checkout final (pulsar "Continuar compra por WhatsApp",
+   o el botón de apartar en la página de transferencia) las piezas se
+   apartan 10 minutos. Mientras el cliente solo explora o sigue agregando
+   productos no se aparta nada. El contador es informativo: la base
    libera el apartado sola al vencer. */
 function apartadoRestante(){
   const exp = typeof MI_APARTADO !== 'undefined' ? MI_APARTADO.expira : null;
@@ -331,7 +333,7 @@ async function apartarBolsa(items){
       (res.articulos||[]).forEach(a => { if(a.apartado) MI_APARTADO.piezas[a.id] = a.apartado; });
       const corto = (res.articulos||[]).filter(a => a.apartado < a.solicitado);
       if(corto.length) toast('Alguien más está comprando parte de lo que pediste; se apartó lo disponible.');
-      else toast('Tus piezas quedan apartadas 5 minutos para completar tu compra.');
+      else toast('Tus piezas quedan apartadas 10 minutos para completar tu compra.');
       renderCart();
       startHoldTicker();
     }

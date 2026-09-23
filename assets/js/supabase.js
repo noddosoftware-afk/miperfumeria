@@ -99,10 +99,12 @@ const sbStorage = {
   }
 };
 
-/* Apartado temporal de inventario. Cuando alguien inicia la compra, sus piezas
-   quedan reservadas 5 minutos en la base; si no concreta, se liberan solas.
+/* Apartado temporal de inventario. Cuando alguien confirma que va a pagar
+   (checkout final), sus piezas quedan reservadas 10 minutos en la base;
+   si no concreta, se liberan solas. Mientras solo esté explorando o
+   agregando productos, no se aparta nada ni corre la cuenta regresiva.
    La tabla no se toca directamente: todo pasa por funciones del servidor. */
-const APARTADO_MINUTOS = 5;
+const APARTADO_MINUTOS = 10;
 const sbReservations = {
   sessionId(){
     let s = null;

@@ -34,9 +34,11 @@ function renderTransfer(){
   const items=selectedPurchase(), q=purchaseQuote(items);
   if(!q.lines.length){content.innerHTML='<div class="empty-state"><p>Selecciona un perfume para continuar.</p><a class="btn" href="catalogo.html">Ver catálogo</a></div>';sum.innerHTML='';return;}
   const bank=TIENDA.transferencia, ready=!!(bank.banco&&bank.beneficiario&&bank.cuenta);
+  const apartado=apartadoRestante()>0;
   content.innerHTML=apartadoBanner()+`<section class="co-box transfer-box"><span class="eyebrow">PAGO POR TRANSFERENCIA</span><h2>Cuenta de transferencia</h2>
     ${ready?`<dl class="bank-details"><div><dt>Banco</dt><dd id="bankName"></dd></div><div><dt>Beneficiario</dt><dd id="bankOwner"></dd></div><div><dt id="bankType"></dt><dd id="bankAccount"></dd></div></dl><button class="btn btn-ghost" id="copyAccount" type="button">Copiar cuenta</button>`:'<dl class="bank-details bank-empty"><div><dt>Banco</dt><dd aria-label="Banco pendiente"></dd></div><div><dt>Beneficiario</dt><dd aria-label="Beneficiario pendiente"></dd></div><div><dt>CLABE o número de cuenta</dt><dd aria-label="Cuenta pendiente"></dd></div></dl><p class="purchase-note">Datos bancarios pendientes. Solicítalos al dueño por WhatsApp.</p>'}
     <p class="purchase-note">Antes de transferir, confirma la disponibilidad y el total según tu forma de entrega.</p>
+    ${apartado?'':'<button class="btn btn-block" id="confirmCheckout" type="button">Confirmar pedido y apartar 10 min para transferir</button><p class="purchase-note">Si todavía vas a seguir comprando, no hace falta apartar: hazlo cuando ya tengas listo tu pedido final.</p>'}
     <a class="btn btn-block wa-buy" data-purchase="${encodeURIComponent(JSON.stringify(items))}" href="${purchaseURL(items)}" target="_blank" rel="noopener">Continuar compra por WhatsApp</a>
   </section>
   <section class="co-box transfer-box"><span class="eyebrow">DESPUÉS DE TRANSFERIR</span><h2>Envía tu comprobante</h2><p>Abre la conversación y adjunta la imagen o el PDF de tu comprobante usando el botón de adjuntar de WhatsApp.</p>
@@ -46,6 +48,7 @@ function renderTransfer(){
   if(ready){document.getElementById('bankName').textContent=bank.banco;document.getElementById('bankOwner').textContent=bank.beneficiario;document.getElementById('bankType').textContent=bank.tipo||'Cuenta';document.getElementById('bankAccount').textContent=bank.cuenta;
     document.getElementById('copyAccount').onclick=async()=>{try{await navigator.clipboard.writeText(bank.cuenta);toast('Cuenta copiada');}catch{toast('Selecciona el número de cuenta para copiarlo');}};
   }
+  document.getElementById('confirmCheckout')?.addEventListener('click',()=>apartarBolsa(items));
   sum.innerHTML='<h3>Tu selección</h3>'+q.lines.map(i=>`<div class="transfer-item"><div>${cardArt(i.p)}</div><div><b>${i.p.marca}</b><p>${i.p.nombre}</p><small>${i.p.ml} · Cantidad: ${i.q}</small><p>${MONEDA(i.unit*i.q)} MXN</p></div></div>`).join('')+`
     <div class="sum-row"><span>Subtotal</span><span>${MONEDA(q.subtotal)}</span></div>
     ${q.wholesale?'<p class="purchase-note">Precio de mayoreo aplicado.</p>':''}
@@ -53,9 +56,5 @@ function renderTransfer(){
     <div class="sum-row total"><span>${deliveryData().method==='personal'?'Subtotal sin entrega':'Total con paquetería'}</span><span>${MONEDA(deliveryData().method==='personal'?q.subtotal:q.total)}</span></div>
     <p class="purchase-note">Precios en MXN. Para entrega personal, acuerda ubicación, costo y horario por WhatsApp.</p>`;
 }
-function pageInit(){
-  renderTransfer();
-  const items=selectedPurchase();
-  if(items.length) apartarBolsa(items);
-}
+function pageInit(){renderTransfer();}
 </script></body></html>
