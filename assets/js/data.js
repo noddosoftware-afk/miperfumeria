@@ -852,7 +852,7 @@ const TIENDA = {
   envioGratisPiezas:3,
   mayoreoMonto:4000,
   paqueteria:"Skydrop",
-  transferencia:{banco:"", beneficiario:"", cuenta:"", tipo:"CLABE"} // Pendiente de datos del dueño; nunca usar datos ficticios.
+  transferencia:{banco:"BBVA", beneficiario:"Martha Xochitl Loeza", cuenta:"012233028583280647", tipo:"CLABE"} // Confirmado por el cliente
 };
 
 /* Ediciones locales del panel de demostración; no sincroniza entre dispositivos. */

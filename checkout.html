@@ -34,7 +34,7 @@ function renderTransfer(){
   const items=selectedPurchase(), q=purchaseQuote(items);
   if(!q.lines.length){content.innerHTML='<div class="empty-state"><p>Selecciona un perfume para continuar.</p><a class="btn" href="catalogo.html">Ver catálogo</a></div>';sum.innerHTML='';return;}
   const bank=TIENDA.transferencia, ready=!!(bank.banco&&bank.beneficiario&&bank.cuenta);
-  content.innerHTML=`<section class="co-box transfer-box"><span class="eyebrow">PAGO POR TRANSFERENCIA</span><h2>Cuenta de transferencia</h2>
+  content.innerHTML=apartadoBanner()+`<section class="co-box transfer-box"><span class="eyebrow">PAGO POR TRANSFERENCIA</span><h2>Cuenta de transferencia</h2>
     ${ready?`<dl class="bank-details"><div><dt>Banco</dt><dd id="bankName"></dd></div><div><dt>Beneficiario</dt><dd id="bankOwner"></dd></div><div><dt id="bankType"></dt><dd id="bankAccount"></dd></div></dl><button class="btn btn-ghost" id="copyAccount" type="button">Copiar cuenta</button>`:'<dl class="bank-details bank-empty"><div><dt>Banco</dt><dd aria-label="Banco pendiente"></dd></div><div><dt>Beneficiario</dt><dd aria-label="Beneficiario pendiente"></dd></div><div><dt>CLABE o número de cuenta</dt><dd aria-label="Cuenta pendiente"></dd></div></dl><p class="purchase-note">Datos bancarios pendientes. Solicítalos al dueño por WhatsApp.</p>'}
     <p class="purchase-note">Antes de transferir, confirma la disponibilidad y el total según tu forma de entrega.</p>
     <a class="btn btn-block wa-buy" data-purchase="${encodeURIComponent(JSON.stringify(items))}" href="${purchaseURL(items)}" target="_blank" rel="noopener">Continuar compra por WhatsApp</a>
@@ -53,5 +53,9 @@ function renderTransfer(){
     <div class="sum-row total"><span>${deliveryData().method==='personal'?'Subtotal sin entrega':'Total con paquetería'}</span><span>${MONEDA(deliveryData().method==='personal'?q.subtotal:q.total)}</span></div>
     <p class="purchase-note">Precios en MXN. Para entrega personal, acuerda ubicación, costo y horario por WhatsApp.</p>`;
 }
-function pageInit(){renderTransfer();}
+function pageInit(){
+  renderTransfer();
+  const items=selectedPurchase();
+  if(items.length) apartarBolsa(items);
+}
 </script></body></html>

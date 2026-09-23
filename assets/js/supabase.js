@@ -100,9 +100,9 @@ const sbStorage = {
 };
 
 /* Apartado temporal de inventario. Cuando alguien inicia la compra, sus piezas
-   quedan reservadas 30 minutos en la base; si no concreta, se liberan solas.
+   quedan reservadas 5 minutos en la base; si no concreta, se liberan solas.
    La tabla no se toca directamente: todo pasa por funciones del servidor. */
-const APARTADO_MINUTOS = 30;
+const APARTADO_MINUTOS = 5;
 const sbReservations = {
   sessionId(){
     let s = null;
