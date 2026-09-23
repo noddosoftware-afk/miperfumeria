@@ -13,18 +13,83 @@
 <body>
 <div id="site-header"></div>
 
-<div class="plp-head"><div class="wrap"><h1>Tu compra, contigo</h1><p>No necesitas una cuenta. El dueño te atiende directamente por WhatsApp.</p></div></div>
-<section><div class="wrap"><div class="cards-3">
-<a class="info-card" href="carrito.html"><h3>Mi selección</h3><p>Revisa los perfumes de tu bolsa y continúa tu compra.</p></a>
-<a class="info-card" href="ayuda.html#rastreo"><h3>Consultar mi entrega</h3><p>Comparte tu número de pedido o guía por WhatsApp.</p></a>
-<a class="info-card" href="admin.html"><h3>Panel de la tienda</h3><p>Vista de demostración para el dueño: inventario, pedidos y entregas.</p></a>
-</div></div></section>
+<div class="plp-head"><div class="wrap"><h1 id="cuentaTitulo">Mi cuenta</h1><p id="cuentaSub">Da seguimiento a tus pedidos por transferencia.</p></div></div>
+<div class="wrap"><div id="cuentaBox"></div></div>
 <div id="site-footer"></div>
 <script src="assets/js/data.js"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/data-live.js"></script>
 <script src="assets/js/layout.js"></script>
 <script src="assets/js/app.js"></script>
-<script>function pageInit(){}</script>
+<script>
+const esc=v=>String(v??'').replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+
+function pageInit(){ sbCustomerAuth.isAuthenticated() ? mostrarPedidos() : mostrarAcceso(); }
+
+function mostrarAcceso(){
+  document.getElementById('cuentaTitulo').textContent='Mi cuenta';
+  document.getElementById('cuentaSub').textContent='Inicia sesión o crea tu cuenta para dar seguimiento a tu pedido por transferencia.';
+  document.getElementById('cuentaBox').innerHTML=`
+    <div class="checkout">
+      <section class="co-box">
+        <span class="eyebrow">YA TENGO CUENTA</span><h2>Iniciar sesión</h2>
+        <form id="formLogin"><div class="form-grid">
+          <label class="field"><span>Correo</span><input name="email" type="email" required autocomplete="username"></label>
+          <label class="field"><span>Contraseña</span><input name="password" type="password" required autocomplete="current-password"></label>
+        </div><p id="errLogin" class="purchase-note" role="alert"></p>
+        <button class="btn btn-block" type="submit">Entrar</button></form>
+      </section>
+      <section class="co-box">
+        <span class="eyebrow">SOY NUEVO</span><h2>Crear cuenta</h2>
+        <form id="formRegistro"><div class="form-grid">
+          <label class="field"><span>Nombre</span><input name="nombre" required maxlength="100" autocomplete="name"></label>
+          <label class="field"><span>Correo</span><input name="email" type="email" required autocomplete="username"></label>
+          <label class="field"><span>Contraseña</span><input name="password" type="password" required minlength="6" autocomplete="new-password"></label>
+        </div><p id="errRegistro" class="purchase-note" role="alert"></p>
+        <button class="btn btn-block btn-ghost" type="submit">Crear cuenta</button></form>
+      </section>
+    </div>
+    <p class="purchase-note" style="margin-top:18px">¿Olvidaste tu acceso? <a href="${TIENDA.whatsapp}" target="_blank" rel="noopener">Escríbenos por WhatsApp</a> y te ayudamos.</p>
+    <p class="purchase-note">La compra directa por WhatsApp no necesita cuenta — esto es solo para dar seguimiento a pedidos pagados por transferencia.</p>`;
+
+  document.getElementById('formLogin').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const f=new FormData(e.target), err=document.getElementById('errLogin');
+    err.textContent='';
+    try{ await sbCustomerAuth.signIn(f.get('email').trim(), f.get('password')); mostrarPedidos(); }
+    catch(ex){ err.textContent='Correo o contraseña incorrectos.'; }
+  });
+  document.getElementById('formRegistro').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const f=new FormData(e.target), err=document.getElementById('errRegistro');
+    err.textContent='';
+    try{ await sbCustomerAuth.signUpCliente({nombre:f.get('nombre').trim(), email:f.get('email').trim(), password:f.get('password')}); mostrarPedidos(); }
+    catch(ex){ err.textContent=ex.message||'No se pudo crear la cuenta.'; }
+  });
+}
+
+async function mostrarPedidos(){
+  document.getElementById('cuentaTitulo').textContent='Mis pedidos';
+  document.getElementById('cuentaSub').textContent='Aquí verás el estado de pago y la guía de envío en cuanto Damián la registre.';
+  const box=document.getElementById('cuentaBox');
+  box.innerHTML='<p class="purchase-note">Cargando tus pedidos…</p>';
+  let pedidos=[];
+  try{ pedidos=await sbCustomerOrders.mine(); }
+  catch(e){ box.innerHTML='<p class="purchase-note">No se pudieron cargar tus pedidos. Intenta de nuevo más tarde.</p>'; return; }
+  box.innerHTML=(pedidos.length?pedidos.map(o=>`
+    <section class="co-box" style="margin-bottom:16px">
+      <span class="eyebrow">PEDIDO ${esc(o.id)}</span>
+      <h2>${esc(o.status||'Por preparar')}</h2>
+      <p class="purchase-note">${o.items.map(i=>esc(i.q+' × '+(byId(i.id)?.nombre||i.id))).join('<br>')}</p>
+      <dl class="bank-details">
+        <div><dt>Pago</dt><dd>${esc(o.payment||'Pendiente')}</dd></div>
+        ${o.courier?`<div><dt>Paquetería</dt><dd>${esc(o.courier)}</dd></div>`:''}
+        ${o.tracking?`<div><dt>Guía</dt><dd>${esc(o.tracking)}</dd></div>`:'<div><dt>Guía</dt><dd>Aún no disponible</dd></div>'}
+      </dl>
+    </section>`).join('') : '<p class="purchase-note">Todavía no tienes pedidos por transferencia registrados.</p>')
+    + `<a class="btn btn-ghost" href="catalogo.html">Ver catálogo</a> <button class="btn btn-ghost" id="salir" type="button" style="margin-left:10px">Cerrar sesión</button>`;
+  document.getElementById('salir').onclick=()=>{ sbCustomerAuth.signOut(); mostrarAcceso(); };
+}
+</script>
 </body>
 </html>

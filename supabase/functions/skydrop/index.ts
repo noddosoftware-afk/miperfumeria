@@ -34,14 +34,26 @@ const cors = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 
-/* El JWT de la sesión del panel ya viene verificado por la plataforma; aquí sólo leemos el rol. */
-function rolDe(req: Request): string {
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+
+/* "authenticated" ya no basta para saber si es Damián: desde que hay cuentas de
+   cliente, cualquier persona logueada tiene ese mismo rol de JWT. Se confirma
+   contra is_admin() (tabla public.admins), reenviando el mismo Authorization
+   que trajo la petición para que la función corra como ese usuario. */
+async function esAdmin(req: Request): Promise<boolean> {
+  const auth = req.headers.get("Authorization");
+  if (!auth) return false;
   try {
-    const raw = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
-    const payload = JSON.parse(atob(raw.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-    return String(payload.role || "");
+    const res = await fetch(SUPABASE_URL + "/rest/v1/rpc/is_admin", {
+      method: "POST",
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: auth, "Content-Type": "application/json" },
+      body: "{}",
+    });
+    if (!res.ok) return false;
+    return (await res.json()) === true;
   } catch {
-    return "";
+    return false;
   }
 }
 
@@ -126,7 +138,7 @@ Deno.serve(async (req) => {
   const accion = limpio(body.accion, 20);
 
   /* Sólo "cotizar" es pública; todo lo demás (generar guía, rastrear, diagnóstico) es del panel. */
-  if (accion !== "cotizar" && rolDe(req) !== "authenticated") {
+  if (accion !== "cotizar" && !(await esAdmin(req))) {
     return json({ error: "Sólo desde el panel de la tienda." }, 401);
   }
 

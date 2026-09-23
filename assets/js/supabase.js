@@ -3,46 +3,67 @@
 const SB_URL = 'https://mmwtujdojaxxtretrpju.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1td3R1amRvamF4eHRyZXRycGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMDU5MDMsImV4cCI6MjEwNTY4MTkwM30.5ffkTR7zvsiLfdEH6Bogl6govMLWJtelP5RcIrnUUcQ';
 
-function sbSession(){ try{ return JSON.parse(localStorage.getItem('mp_session')); }catch{ return null; } }
-function sbSetSession(s){ try{ localStorage.setItem('mp_session', JSON.stringify(s)); }catch{} }
-function sbClearSession(){ try{ localStorage.removeItem('mp_session'); }catch{} }
-
-async function sbRequest(path, opts={}){
-  const session = sbSession();
-  const authed = session && session.access_token && session.expires_at > Date.now();
-  const headers = Object.assign({
-    apikey: SB_ANON,
-    Authorization: 'Bearer ' + (authed ? session.access_token : SB_ANON),
-    'Content-Type': 'application/json'
-  }, opts.headers || {});
-  const res = await fetch(SB_URL + path, Object.assign({}, opts, {headers}));
-  if(res.status === 401 && authed) sbClearSession();
-  if(!res.ok){
-    const text = await res.text().catch(()=>'');
-    throw new Error('Supabase ' + res.status + ': ' + text);
-  }
-  const text = await res.text();
-  if(!text) return null;
-  try{ return JSON.parse(text); }catch{ return null; }
+/* Admin (panel de la tienda) y cliente (cuenta.html) son dos sesiones
+   independientes en el mismo navegador, cada una en su propia llave de
+   localStorage — así Damián puede probar el sitio como cliente sin perder
+   su sesión de administrador, y viceversa. */
+function crearSesion(storageKey){
+  const session = () => { try{ return JSON.parse(localStorage.getItem(storageKey)); }catch{ return null; } };
+  const setSession = s => { try{ localStorage.setItem(storageKey, JSON.stringify(s)); }catch{} };
+  const clearSession = () => { try{ localStorage.removeItem(storageKey); }catch{} };
+  return {
+    session, setSession, clearSession,
+    isAuthenticated(){ const s = session(); return !!(s && s.access_token && s.expires_at > Date.now()); },
+    signOut(){ clearSession(); },
+    async signIn(email, password){
+      const res = await fetch(SB_URL + '/auth/v1/token?grant_type=password', {
+        method: 'POST', headers: {apikey: SB_ANON, 'Content-Type': 'application/json'},
+        body: JSON.stringify({email, password})
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error_description || data.msg || 'No se pudo iniciar sesión.');
+      setSession({access_token: data.access_token, refresh_token: data.refresh_token, expires_at: Date.now() + data.expires_in * 1000, email, user_id: data.user?.id, nombre: data.user?.user_metadata?.nombre});
+      return data;
+    },
+    async signUp(email, password, datos={}){
+      const res = await fetch(SB_URL + '/auth/v1/signup', {
+        method: 'POST', headers: {apikey: SB_ANON, 'Content-Type': 'application/json'},
+        body: JSON.stringify({email, password, data: datos})
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error_description || data.msg || 'No se pudo crear la cuenta.');
+      if(data.access_token){
+        setSession({access_token: data.access_token, refresh_token: data.refresh_token, expires_at: Date.now() + data.expires_in * 1000, email, user_id: data.user?.id, nombre: datos.nombre});
+      }
+      return data;
+    },
+    async request(path, opts={}){
+      const s = session();
+      const authed = s && s.access_token && s.expires_at > Date.now();
+      const headers = Object.assign({
+        apikey: SB_ANON,
+        Authorization: 'Bearer ' + (authed ? s.access_token : SB_ANON),
+        'Content-Type': 'application/json'
+      }, opts.headers || {});
+      const res = await fetch(SB_URL + path, Object.assign({}, opts, {headers}));
+      if(res.status === 401 && authed) clearSession();
+      if(!res.ok){
+        const text = await res.text().catch(()=>'');
+        throw new Error('Supabase ' + res.status + ': ' + text);
+      }
+      const text = await res.text();
+      if(!text) return null;
+      try{ return JSON.parse(text); }catch{ return null; }
+    }
+  };
 }
 
-const sbAuth = {
-  async signIn(email, password){
-    const res = await fetch(SB_URL + '/auth/v1/token?grant_type=password', {
-      method: 'POST',
-      headers: {apikey: SB_ANON, 'Content-Type': 'application/json'},
-      body: JSON.stringify({email, password})
-    });
-    const data = await res.json();
-    if(!res.ok) throw new Error(data.error_description || data.msg || 'No se pudo iniciar sesión.');
-    sbSetSession({access_token: data.access_token, refresh_token: data.refresh_token, expires_at: Date.now() + data.expires_in * 1000, email});
-    return data;
-  },
-  signOut(){ sbClearSession(); },
-  isAuthenticated(){
-    const s = sbSession();
-    return !!(s && s.access_token && s.expires_at > Date.now());
-  }
+const sbAuth = crearSesion('mp_session'); // panel admin
+async function sbRequest(path, opts={}){ return sbAuth.request(path, opts); }
+
+const sbCustomerAuth = crearSesion('mp_customer_session'); // cuenta del cliente
+sbCustomerAuth.signUpCliente = async function({nombre, email, password}){
+  return sbCustomerAuth.signUp(email, password, {nombre});
 };
 
 function dbToProduct(r){
@@ -67,7 +88,8 @@ function dbToOrder(r){
   return {
     id: r.id, customer: r.customer, recipient: r.recipient, city: r.city, address: r.address, reference: r.reference,
     channel: r.channel, method: r.method, payment: r.payment, status: r.status, date: r.date, requested: r.requested,
-    confirmed: r.confirmed, courier: r.courier, tracking: r.tracking, items: r.items || [], example: !!r.example
+    confirmed: r.confirmed, courier: r.courier, tracking: r.tracking, items: r.items || [], example: !!r.example,
+    customer_user_id: r.customer_user_id || null
   };
 }
 
@@ -84,7 +106,7 @@ const sbProducts = {
    y en la base sólo se guarda la URL, no la imagen completa. */
 const sbStorage = {
   async uploadProductImage(file, productId){
-    const session = sbSession();
+    const session = sbAuth.session();
     if(!(session && session.access_token && session.expires_at > Date.now())) throw new Error('Inicia sesión para subir fotografías.');
     const ext = ({'image/png':'png','image/jpeg':'jpg','image/webp':'webp'})[file.type];
     if(!ext) throw new Error('Usa PNG, JPG o WebP.');
@@ -158,5 +180,22 @@ const sbOrders = {
     await sbRequest('/rest/v1/orders?on_conflict=id', {
       method: 'POST', headers: {Prefer: 'resolution=merge-duplicates'}, body: JSON.stringify(order)
     });
+  }
+};
+
+/* Pedidos propios del cliente (cuenta.html): solo puede crear y leer los suyos,
+   nunca editarlos — el estado, pago y guía los controla Damián desde el panel. */
+const sbCustomerOrders = {
+  async create(order){
+    const s = sbCustomerAuth.session();
+    if(!(s && s.access_token && s.expires_at > Date.now())) throw new Error('Inicia sesión para registrar tu pedido.');
+    const conId = {...order, customer_user_id: s.user_id};
+    await sbCustomerAuth.request('/rest/v1/orders', {
+      method: 'POST', headers: {Prefer: 'return=minimal'}, body: JSON.stringify(conId)
+    });
+    return conId.id;
+  },
+  async mine(){
+    return (await sbCustomerAuth.request('/rest/v1/orders?select=*&order=created_at.desc')).map(dbToOrder);
   }
 };

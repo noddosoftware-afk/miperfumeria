@@ -38,7 +38,27 @@ function renderTransfer(){
   content.innerHTML=apartadoBanner()+`<section class="co-box transfer-box"><span class="eyebrow">PAGO POR TRANSFERENCIA</span><h2>Cuenta de transferencia</h2>
     ${ready?`<dl class="bank-details"><div><dt>Banco</dt><dd id="bankName"></dd></div><div><dt>Beneficiario</dt><dd id="bankOwner"></dd></div><div><dt id="bankType"></dt><dd id="bankAccount"></dd></div></dl><button class="btn btn-ghost" id="copyAccount" type="button">Copiar cuenta</button>`:'<dl class="bank-details bank-empty"><div><dt>Banco</dt><dd aria-label="Banco pendiente"></dd></div><div><dt>Beneficiario</dt><dd aria-label="Beneficiario pendiente"></dd></div><div><dt>CLABE o número de cuenta</dt><dd aria-label="Cuenta pendiente"></dd></div></dl><p class="purchase-note">Datos bancarios pendientes. Solicítalos al dueño por WhatsApp.</p>'}
     <p class="purchase-note">Antes de transferir, confirma la disponibilidad y el total según tu forma de entrega.</p>
-    ${apartado?'':'<button class="btn btn-block" id="confirmCheckout" type="button">Confirmar pedido y apartar 10 min para transferir</button><p class="purchase-note">Si todavía vas a seguir comprando, no hace falta apartar: hazlo cuando ya tengas listo tu pedido final.</p>'}
+    ${apartado?'':`<button class="btn btn-block" id="confirmCheckout" type="button">Confirmar pedido y apartar 10 min para transferir</button>
+    <p class="purchase-note">Si todavía vas a seguir comprando, no hace falta apartar: hazlo cuando ya tengas listo tu pedido final. Para dar seguimiento a tu pago necesitas iniciar sesión o crear una cuenta (correo y contraseña); tu compra por WhatsApp no lo requiere.</p>
+    <div id="loginInline" hidden>
+      <div class="form-grid">
+        <div>
+          <p class="purchase-note"><b>Ya tengo cuenta</b></p>
+          <form id="formLoginInline"><label class="field"><span>Correo</span><input name="email" type="email" required autocomplete="username"></label>
+          <label class="field"><span>Contraseña</span><input name="password" type="password" required autocomplete="current-password"></label>
+          <p id="errLoginInline" class="purchase-note" role="alert"></p>
+          <button class="btn btn-block" type="submit">Entrar y confirmar</button></form>
+        </div>
+        <div>
+          <p class="purchase-note"><b>Soy nuevo</b></p>
+          <form id="formRegistroInline"><label class="field"><span>Nombre</span><input name="nombre" required maxlength="100" autocomplete="name"></label>
+          <label class="field"><span>Correo</span><input name="email" type="email" required autocomplete="username"></label>
+          <label class="field"><span>Contraseña</span><input name="password" type="password" required minlength="6" autocomplete="new-password"></label>
+          <p id="errRegistroInline" class="purchase-note" role="alert"></p>
+          <button class="btn btn-block btn-ghost" type="submit">Crear cuenta y confirmar</button></form>
+        </div>
+      </div>
+    </div>`}
     <a class="btn btn-block wa-buy" data-purchase="${encodeURIComponent(JSON.stringify(items))}" href="${purchaseURL(items)}" target="_blank" rel="noopener">Continuar compra por WhatsApp</a>
   </section>
   <section class="co-box transfer-box"><span class="eyebrow">DESPUÉS DE TRANSFERIR</span><h2>Envía tu comprobante</h2><p>Abre la conversación y adjunta la imagen o el PDF de tu comprobante usando el botón de adjuntar de WhatsApp.</p>
@@ -48,7 +68,25 @@ function renderTransfer(){
   if(ready){document.getElementById('bankName').textContent=bank.banco;document.getElementById('bankOwner').textContent=bank.beneficiario;document.getElementById('bankType').textContent=bank.tipo||'Cuenta';document.getElementById('bankAccount').textContent=bank.cuenta;
     document.getElementById('copyAccount').onclick=async()=>{try{await navigator.clipboard.writeText(bank.cuenta);toast('Cuenta copiada');}catch{toast('Selecciona el número de cuenta para copiarlo');}};
   }
-  document.getElementById('confirmCheckout')?.addEventListener('click',()=>apartarBolsa(items));
+  document.getElementById('confirmCheckout')?.addEventListener('click',()=>{
+    if(sbCustomerAuth.isAuthenticated()){ completarPedido(items); return; }
+    document.getElementById('loginInline').hidden=false;
+    document.getElementById('confirmCheckout').hidden=true;
+  });
+  document.getElementById('formLoginInline')?.addEventListener('submit', async e=>{
+    e.preventDefault();
+    const f=new FormData(e.target), err=document.getElementById('errLoginInline');
+    err.textContent='';
+    try{ await sbCustomerAuth.signIn(f.get('email').trim(), f.get('password')); await completarPedido(items); }
+    catch(ex){ err.textContent='Correo o contraseña incorrectos.'; }
+  });
+  document.getElementById('formRegistroInline')?.addEventListener('submit', async e=>{
+    e.preventDefault();
+    const f=new FormData(e.target), err=document.getElementById('errRegistroInline');
+    err.textContent='';
+    try{ await sbCustomerAuth.signUpCliente({nombre:f.get('nombre').trim(), email:f.get('email').trim(), password:f.get('password')}); await completarPedido(items); }
+    catch(ex){ err.textContent=ex.message||'No se pudo crear la cuenta.'; }
+  });
   sum.innerHTML='<h3>Tu selección</h3>'+q.lines.map(i=>`<div class="transfer-item"><div>${cardArt(i.p)}</div><div><b>${i.p.marca}</b><p>${i.p.nombre}</p><small>${i.p.ml} · Cantidad: ${i.q}</small><p>${MONEDA(i.unit*i.q)} MXN</p></div></div>`).join('')+`
     <div class="sum-row"><span>Subtotal</span><span>${MONEDA(q.subtotal)}</span></div>
     ${q.wholesale?'<p class="purchase-note">Precio de mayoreo aplicado.</p>':''}
@@ -89,5 +127,28 @@ function pintarEnvioReal(){
   box.innerHTML=`<div class="sum-row"><span>Envío real (${esc(mejor.paqueteria)})</span><span>${MONEDA(mejor.costo)}</span></div><p class="purchase-note">${esc(mejor.servicio)} · ${mejor.dias} día(s) según Skydropx.</p>`;
 }
 const esc=v=>String(v??'').replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+
+/* Confirmar pedido final: aparta el inventario (igual que hasta ahora) y además
+   registra el pedido real ligado a la cuenta del cliente, para que Damián lo vea
+   en el panel y el cliente pueda regresar a "Mi cuenta" a ver el estado y la guía. */
+async function completarPedido(items){
+  await apartarBolsa(items);
+  try{
+    const q=purchaseQuote(items);
+    const s=sbCustomerAuth.session(), d=deliveryData();
+    await sbCustomerOrders.create({
+      id: 'PED-'+Date.now().toString(36).toUpperCase(),
+      items: q.lines.map(l=>({id:l.id, q:l.q, price:l.unit})),
+      status: 'Por preparar', payment: 'Por revisar', channel: 'Transferencia',
+      method: d.method||'paqueteria', customer: s?.nombre||s?.email||'', recipient: d.recipient||'',
+      city: d.city||'', address: d.address||'', reference: d.reference||'',
+      date: new Date().toLocaleDateString('en-CA'), requested: '', confirmed: '', courier: '', tracking: '', example: false
+    });
+    toast('Pedido registrado. Sigue el estado y la guía en Mi cuenta.');
+  }catch(e){
+    toast('Se apartó tu pedido, pero no se pudo registrar en tu cuenta. Escríbenos por WhatsApp.');
+  }
+  renderTransfer();
+}
 function pageInit(){renderTransfer();}
 </script></body></html>
