@@ -603,6 +603,7 @@ section.tight{padding:clamp(28px,3.5vw,44px) 0}
   .benefit svg{margin:0 auto}
   .hero-copy p{font-size:14px}
   .mobile-search{display:block;padding:10px 24px 14px;border-top:1px solid var(--line)}
+  .card-quick{transform:none;padding:8px 6px;font-size:9px}
 }
 @media (min-width:901px){ .mobile-search{display:none} }
 
