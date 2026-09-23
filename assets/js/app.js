@@ -371,12 +371,14 @@ function selectedPurchase(){
 function deliveryData(){try{return JSON.parse(sessionStorage.getItem('mp_delivery'))||{};}catch{return {};}}
 function deliveryMessage(){const d=deliveryData();return [
  'Modalidad: '+(d.method==='personal'?'entrega personal':d.method==='paqueteria'?'paquetería':'por acordar'),
- ...[['recipient','Recibe'],['city','Ciudad'],['postcode','Código postal'],['address','Dirección'],['reference','Referencias'],['schedule','Horario solicitado (pendiente de confirmar)']].filter(([k])=>d[k]&&(k!=='schedule'||d.method==='personal')).map(([k,l])=>l+': '+d[k])];}
+ ...[['recipient','Recibe'],['city','Ciudad'],['estado','Estado'],['colonia','Colonia'],['postcode','Código postal'],['address','Dirección'],['reference','Referencias'],['schedule','Horario solicitado (pendiente de confirmar)']].filter(([k])=>d[k]&&(k!=='schedule'||d.method==='personal')).map(([k,l])=>l+': '+d[k])];}
 function mountDelivery(){
  const target=document.getElementById('deliveryChoice');if(!target)return;
  target.innerHTML=`<details class="delivery-box"><summary>Elige cómo recibir tu compra</summary><p>Opcional. Puedes acordar los detalles por WhatsApp.</p><label class="field"><span>Modalidad de entrega</span><select name="method"><option value="">Por acordar</option><option value="personal">Entrega personal</option><option value="paqueteria">Envío por paquetería</option></select></label><div class="form-grid">
  <label class="field"><span>Persona que recibe</span><input name="recipient" autocomplete="name" maxlength="100"></label>
- <label class="field"><span>Ciudad</span><input name="city" autocomplete="address-level2" maxlength="100"></label>
+ <label class="field"><span>Estado</span><input name="estado" autocomplete="address-level1" maxlength="100"></label>
+ <label class="field"><span>Ciudad o municipio</span><input name="city" autocomplete="address-level2" maxlength="100"></label>
+ <label class="field"><span>Colonia</span><input name="colonia" autocomplete="address-level3" maxlength="100"></label>
  <label class="field"><span>Código postal</span><input name="postcode" inputmode="numeric" maxlength="5" autocomplete="postal-code"></label>
  <label class="field"><span>Horario preferido (entrega personal)</span><input name="schedule" placeholder="Por ejemplo, viernes por la tarde" maxlength="120"></label>
  <label class="field full"><span>Dirección</span><input name="address" autocomplete="street-address" maxlength="220"></label>

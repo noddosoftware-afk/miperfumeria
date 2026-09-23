@@ -1,11 +1,16 @@
 /* Conexión con Skydropx para miperfumeria.
    Vive en el servidor: las credenciales de Skydropx nunca viajan al navegador ni al repositorio.
-   Sólo responde a una sesión del panel (rol authenticated); el público no la puede usar.
+
+   "cotizar" es la única acción pública: cualquier visitante del sitio puede pedir un
+   precio de envío (solo lectura, no cuesta ni compromete nada). Generar guía y rastrear
+   siguen siendo solo para una sesión del panel (rol authenticated) — el cliente no debe
+   ver ni generar guías todavía; eso se sigue coordinando manualmente por WhatsApp hasta
+   que se conecte el pago en línea (Mercado Pago).
 
    Acciones:
-     cotizar    { cp_destino, estado, ciudad, colonia, piezas? }  -> tarifas disponibles
-     crear_guia { pedido?, rate_id, nombre, telefono, email, calle, referencia? }
-     rastrear   { tracking_number, carrier_code }
+     cotizar    { cp_destino, estado, ciudad, colonia, piezas? }  -> tarifas disponibles (pública)
+     crear_guia { pedido?, rate_id, nombre, telefono, email, calle, referencia? }        (solo panel)
+     rastrear   { tracking_number, carrier_code }                                        (solo panel)
 
    Secretos que necesita (Supabase → Edge Functions → Secrets):
      SKYDROPX_CLIENT_ID, SKYDROPX_CLIENT_SECRET
@@ -66,7 +71,7 @@ function origenContacto() {
 /* Una sola caja por pedido; el peso sube un poco por cada 3 perfumes adicionales.
    Medidas conservadoras de una caja chica (cm) y peso en kg. */
 function paquete(piezas = 1) {
-  const cajas = Math.max(1, Math.ceil(piezas / 3));
+  const cajas = Math.max(1, Math.ceil(Math.min(Math.max(piezas, 1), 30) / 3));
   return { weight: cajas, length: 25, width: 20, height: 15 };
 }
 
@@ -115,11 +120,15 @@ const limpio = (v: unknown, max = 120) => String(v ?? "").trim().slice(0, max);
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "Método no permitido." }, 405);
-  if (rolDe(req) !== "authenticated") return json({ error: "Sólo desde el panel de la tienda." }, 401);
 
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch { return json({ error: "Cuerpo inválido." }, 400); }
   const accion = limpio(body.accion, 20);
+
+  /* Sólo "cotizar" es pública; todo lo demás (generar guía, rastrear, diagnóstico) es del panel. */
+  if (accion !== "cotizar" && rolDe(req) !== "authenticated") {
+    return json({ error: "Sólo desde el panel de la tienda." }, 401);
+  }
 
   try {
     if (accion === "estado") {

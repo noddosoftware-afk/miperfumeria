@@ -52,9 +52,42 @@ function renderTransfer(){
   sum.innerHTML='<h3>Tu selección</h3>'+q.lines.map(i=>`<div class="transfer-item"><div>${cardArt(i.p)}</div><div><b>${i.p.marca}</b><p>${i.p.nombre}</p><small>${i.p.ml} · Cantidad: ${i.q}</small><p>${MONEDA(i.unit*i.q)} MXN</p></div></div>`).join('')+`
     <div class="sum-row"><span>Subtotal</span><span>${MONEDA(q.subtotal)}</span></div>
     ${q.wholesale?'<p class="purchase-note">Precio de mayoreo aplicado.</p>':''}
-    <div class="sum-row"><span>${deliveryData().method==='personal'?'Entrega personal':'Envío por paquetería'}</span><span>${deliveryData().method==='personal'?'Por confirmar':q.shipping?MONEDA(q.shipping):'Gratis'}</span></div>
+    <div class="sum-row"><span>${deliveryData().method==='personal'?'Entrega personal':'Envío por paquetería (estimado)'}</span><span>${deliveryData().method==='personal'?'Por confirmar':q.shipping?MONEDA(q.shipping):'Gratis'}</span></div>
+    <div id="envioReal"></div>
     <div class="sum-row total"><span>${deliveryData().method==='personal'?'Subtotal sin entrega':'Total con paquetería'}</span><span>${MONEDA(deliveryData().method==='personal'?q.subtotal:q.total)}</span></div>
     <p class="purchase-note">Precios en MXN. Para entrega personal, acuerda ubicación, costo y horario por WhatsApp.</p>`;
+  actualizarEnvioReal(q.units);
 }
+/* Cotización real con Skydropx cuando ya hay CP, estado, ciudad y colonia.
+   Solo informativa: el total de arriba sigue siendo el estimado fijo hasta
+   que se conecte el pago en línea; aquí solo se muestra el costo real. */
+let ultimaCotizacion=null;
+async function actualizarEnvioReal(piezas){
+  const box=document.getElementById('envioReal');if(!box)return;
+  const d=deliveryData();
+  if(d.method!=='paqueteria'||!d.postcode||!d.estado||!d.city||!d.colonia){box.innerHTML='';ultimaCotizacion=null;return;}
+  const clave=[d.postcode,d.estado,d.city,d.colonia,piezas||1].join('|');
+  if(ultimaCotizacion&&ultimaCotizacion.clave===clave){pintarEnvioReal();return;}
+  ultimaCotizacion={clave,cargando:true,tarifas:null,error:false};
+  pintarEnvioReal();
+  try{
+    const r=await sbSkydrop.cotizar({cp_destino:d.postcode,estado:d.estado,ciudad:d.city,colonia:d.colonia,piezas:piezas||1});
+    if(ultimaCotizacion.clave!==clave)return;
+    ultimaCotizacion.cargando=false;
+    ultimaCotizacion.tarifas=r?.tarifas||[];
+  }catch(e){
+    if(ultimaCotizacion.clave!==clave)return;
+    ultimaCotizacion.cargando=false;ultimaCotizacion.error=true;
+  }
+  pintarEnvioReal();
+}
+function pintarEnvioReal(){
+  const box=document.getElementById('envioReal');if(!box||!ultimaCotizacion)return;
+  if(ultimaCotizacion.cargando){box.innerHTML='<p class="purchase-note">Calculando envío real con tu dirección…</p>';return;}
+  if(ultimaCotizacion.error||!ultimaCotizacion.tarifas?.length){box.innerHTML='<p class="purchase-note">No se pudo calcular el envío real ahora mismo; usamos el estimado.</p>';return;}
+  const mejor=ultimaCotizacion.tarifas[0];
+  box.innerHTML=`<div class="sum-row"><span>Envío real (${esc(mejor.paqueteria)})</span><span>${MONEDA(mejor.costo)}</span></div><p class="purchase-note">${esc(mejor.servicio)} · ${mejor.dias} día(s) según Skydropx.</p>`;
+}
+const esc=v=>String(v??'').replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
 function pageInit(){renderTransfer();}
 </script></body></html>

@@ -141,6 +141,17 @@ const sbReservations = {
   async adminRelease(id){ return await sbRequest('/rest/v1/rpc/admin_release', {method: 'POST', body: JSON.stringify({p_id: id})}); }
 };
 
+/* Cotización real de envío (Skydropx). Pública: cualquier visitante puede pedir precio.
+   Generar guía y rastrear siguen siendo solo del panel admin, aquí no se exponen. */
+const sbSkydrop = {
+  async cotizar({cp_destino, estado, ciudad, colonia, piezas}){
+    return await sbRequest('/functions/v1/skydrop', {
+      method: 'POST',
+      body: JSON.stringify({accion: 'cotizar', cp_destino, estado, ciudad, colonia, piezas})
+    });
+  }
+};
+
 const sbOrders = {
   async fetchAll(){ return (await sbRequest('/rest/v1/orders?select=*&order=created_at.desc')).map(dbToOrder); },
   async upsert(order){
