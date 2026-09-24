@@ -89,7 +89,7 @@ function dbToOrder(r){
     id: r.id, customer: r.customer, recipient: r.recipient, city: r.city, address: r.address, reference: r.reference,
     channel: r.channel, method: r.method, payment: r.payment, status: r.status, date: r.date, requested: r.requested,
     confirmed: r.confirmed, courier: r.courier, tracking: r.tracking, items: r.items || [], example: !!r.example,
-    customer_user_id: r.customer_user_id || null
+    customer_user_id: r.customer_user_id || null, comprobante_path: r.comprobante_path || null
   };
 }
 
@@ -118,6 +118,41 @@ const sbStorage = {
     });
     if(!res.ok) throw new Error('No se pudo subir la fotografía: ' + (await res.text().catch(()=>res.status)));
     return SB_URL + '/storage/v1/object/public/productos/' + path;
+  }
+};
+
+/* Comprobante de transferencia: el cliente lo sube a un bucket privado
+   (nadie más puede verlo, solo su propia carpeta) y luego queda ligado a
+   su pedido mediante attach_comprobante(), la única puerta angosta que
+   le permite tocar su fila en orders sin abrir edición general. */
+const sbComprobantes = {
+  async subir(file, orderId){
+    const session = sbCustomerAuth.session();
+    if(!(session && session.access_token && session.expires_at > Date.now())) throw new Error('Inicia sesión para subir tu comprobante.');
+    const ext = ({'image/png':'png','image/jpeg':'jpg','image/webp':'webp','application/pdf':'pdf'})[file.type];
+    if(!ext) throw new Error('Usa una imagen (PNG, JPG, WebP) o PDF.');
+    const path = session.user_id + '/' + orderId + '-' + Date.now() + '.' + ext;
+    const res = await fetch(SB_URL + '/storage/v1/object/comprobantes/' + path, {
+      method: 'POST',
+      headers: {apikey: SB_ANON, Authorization: 'Bearer ' + session.access_token, 'Content-Type': file.type, 'x-upsert': 'true'},
+      body: file
+    });
+    if(!res.ok) throw new Error('No se pudo subir el comprobante: ' + (await res.text().catch(()=>res.status)));
+    await sbCustomerAuth.request('/rest/v1/rpc/attach_comprobante', {
+      method: 'POST', body: JSON.stringify({p_order_id: orderId, p_path: path})
+    });
+    return path;
+  },
+  /* Solo para el panel admin: descarga el archivo privado con la sesión de
+     Damián y regresa una URL de objeto local para mostrarlo. */
+  async verComoAdmin(path){
+    const session = sbAuth.session();
+    if(!(session && session.access_token && session.expires_at > Date.now())) throw new Error('Inicia sesión de administrador.');
+    const res = await fetch(SB_URL + '/storage/v1/object/authenticated/comprobantes/' + path, {
+      headers: {apikey: SB_ANON, Authorization: 'Bearer ' + session.access_token}
+    });
+    if(!res.ok) throw new Error('No se pudo abrir el comprobante.');
+    return URL.createObjectURL(await res.blob());
   }
 };
 

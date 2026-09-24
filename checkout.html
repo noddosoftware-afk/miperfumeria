@@ -27,18 +27,22 @@
 <script src="assets/js/layout.js"></script>
 <script src="assets/js/app.js"></script>
 <script>
-function onCartChange(){renderTransfer();}
+let pedidoConfirmado=null;
+function onCartChange(){pedidoConfirmado=null;renderTransfer();}
 function renderTransfer(){
   const content=document.getElementById('transferContent'), sum=document.getElementById('sum');
   if(!content)return;
   const items=selectedPurchase(), q=purchaseQuote(items);
   if(!q.lines.length){content.innerHTML='<div class="empty-state"><p>Selecciona un perfume para continuar.</p><a class="btn" href="catalogo.html">Ver catálogo</a></div>';sum.innerHTML='';return;}
   const bank=TIENDA.transferencia, ready=!!(bank.banco&&bank.beneficiario&&bank.cuenta);
-  const apartado=apartadoRestante()>0;
+  const autenticado=sbCustomerAuth.isAuthenticated();
   content.innerHTML=apartadoBanner()+`<section class="co-box transfer-box"><span class="eyebrow">PAGO POR TRANSFERENCIA</span><h2>Cuenta de transferencia</h2>
     ${ready?`<dl class="bank-details"><div><dt>Banco</dt><dd id="bankName"></dd></div><div><dt>Beneficiario</dt><dd id="bankOwner"></dd></div><div><dt id="bankType"></dt><dd id="bankAccount"></dd></div></dl><button class="btn btn-ghost" id="copyAccount" type="button">Copiar cuenta</button>`:'<dl class="bank-details bank-empty"><div><dt>Banco</dt><dd aria-label="Banco pendiente"></dd></div><div><dt>Beneficiario</dt><dd aria-label="Beneficiario pendiente"></dd></div><div><dt>CLABE o número de cuenta</dt><dd aria-label="Cuenta pendiente"></dd></div></dl><p class="purchase-note">Datos bancarios pendientes. Solicítalos al dueño por WhatsApp.</p>'}
     <p class="purchase-note">Antes de transferir, confirma la disponibilidad y el total según tu forma de entrega.</p>
-    ${apartado?'':`<button class="btn btn-block" id="confirmCheckout" type="button">Confirmar pedido y apartar 10 min para transferir</button>
+    ${pedidoConfirmado?`<div class="confirm-check">
+      <svg width="46" height="46" viewBox="0 0 52 52"><circle class="check-circle" cx="26" cy="26" r="24" fill="none"/><path class="check-mark" fill="none" d="M14 27l7 7 16-16"/></svg>
+      <p><b>¡Cuenta y pedido confirmados!</b><br>Folio ${esc(pedidoConfirmado.id)} · Damián lo verá en el panel.</p>
+    </div>`:`<button class="btn btn-block" id="confirmCheckout" type="button">Confirmar pedido y apartar 10 min para transferir</button>
     <p class="purchase-note">Si todavía vas a seguir comprando, no hace falta apartar: hazlo cuando ya tengas listo tu pedido final. Para dar seguimiento a tu pago necesitas iniciar sesión o crear una cuenta (correo y contraseña); tu compra por WhatsApp no lo requiere.</p>
     <div id="loginInline" hidden>
       <div class="form-grid">
@@ -64,7 +68,9 @@ function renderTransfer(){
   <section class="co-box transfer-box"><span class="eyebrow">DESPUÉS DE TRANSFERIR</span><h2>Envía tu comprobante</h2><p>Abre la conversación y adjunta la imagen o el PDF de tu comprobante usando el botón de adjuntar de WhatsApp.</p>
     <a class="btn btn-block btn-ghost receipt-buy" data-purchase="${encodeURIComponent(JSON.stringify(items))}" data-receipt="true" href="${purchaseURL(items,true)}" target="_blank" rel="noopener">Enviar comprobante por WhatsApp</a>
     <p class="purchase-note">El mensaje incluye tus productos y cantidades. El dueño revisará el pago y acordará la entrega contigo.</p>
+    ${autenticado?`<div id="comprobanteBox" style="margin-top:14px"></div>`:`<p class="purchase-note">O inicia sesión arriba y sube aquí mismo la imagen o PDF de tu comprobante, ligado a tu pedido, para que Damián lo vea directo en el panel.</p>`}
   </section>`;
+  if(autenticado) mostrarSubidaComprobante();
   if(ready){document.getElementById('bankName').textContent=bank.banco;document.getElementById('bankOwner').textContent=bank.beneficiario;document.getElementById('bankType').textContent=bank.tipo||'Cuenta';document.getElementById('bankAccount').textContent=bank.cuenta;
     document.getElementById('copyAccount').onclick=async()=>{try{await navigator.clipboard.writeText(bank.cuenta);toast('Cuenta copiada');}catch{toast('Selecciona el número de cuenta para copiarlo');}};
   }
@@ -137,19 +143,63 @@ async function completarPedido(items){
   try{
     const q=purchaseQuote(items);
     const s=sbCustomerAuth.session(), d=deliveryData();
+    const id='PED-'+Date.now().toString(36).toUpperCase();
     await sbCustomerOrders.create({
-      id: 'PED-'+Date.now().toString(36).toUpperCase(),
+      id,
       items: q.lines.map(l=>({id:l.id, q:l.q, price:l.unit})),
       status: 'Por preparar', payment: 'Por revisar', channel: 'Transferencia',
       method: d.method||'paqueteria', customer: s?.nombre||s?.email||'', recipient: d.recipient||'',
       city: d.city||'', address: d.address||'', reference: d.reference||'',
       date: new Date().toLocaleDateString('en-CA'), requested: '', confirmed: '', courier: '', tracking: '', example: false
     });
+    pedidoConfirmado={id};
     toast('Pedido registrado. Sigue el estado y la guía en Mi cuenta.');
   }catch(e){
     toast('Se apartó tu pedido, pero no se pudo registrar en tu cuenta. Escríbenos por WhatsApp.');
   }
   renderTransfer();
 }
-function pageInit(){renderTransfer();}
+/* Comprobante de pago: solo puede subirse cuando ya hay un pedido registrado
+   ligado a la cuenta (el que se acaba de confirmar en esta visita, o el más
+   reciente pendiente de revisión si el cliente regresó después). */
+async function mostrarSubidaComprobante(){
+  const box=document.getElementById('comprobanteBox'); if(!box) return;
+  let pedido=pedidoConfirmado;
+  if(!pedido){
+    box.innerHTML='<p class="purchase-note">Cargando tu pedido…</p>';
+    try{ pedido=(await sbCustomerOrders.mine()).find(o=>o.payment==='Por revisar'&&!o.comprobante_path); }
+    catch(e){ pedido=null; }
+  }
+  if(!pedido){ box.innerHTML='<p class="purchase-note">Confirma tu pedido arriba para poder subir aquí tu comprobante.</p>'; return; }
+  if(pedido.comprobante_path){ box.innerHTML=`<p class="purchase-note">✅ Ya recibimos tu comprobante del pedido ${esc(pedido.id)}.</p>`; return; }
+  box.innerHTML=`<form id="formComprobante"><label class="field"><span>Comprobante del pedido ${esc(pedido.id)}</span><input type="file" name="archivo" accept="image/png,image/jpeg,image/webp,application/pdf" required></label>
+    <p id="errComprobante" class="purchase-note" role="alert"></p>
+    <button class="btn btn-block btn-ghost" type="submit">Subir comprobante</button></form>`;
+  document.getElementById('formComprobante').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const f=new FormData(e.target), file=f.get('archivo'), err=document.getElementById('errComprobante');
+    err.textContent='';
+    if(!file || !file.size){ err.textContent='Elige un archivo.'; return; }
+    try{
+      await sbComprobantes.subir(file, pedido.id);
+      box.innerHTML=`<p class="purchase-note">✅ Comprobante recibido del pedido ${esc(pedido.id)}. Damián lo verá en el panel.</p>`;
+      toast('Comprobante subido.');
+    }catch(ex){ err.textContent=ex.message||'No se pudo subir el comprobante.'; }
+  });
+}
+/* Si el cliente recarga la página justo después de confirmar (o vuelve más
+   tarde con el mismo carrito), evitamos que el botón le deje crear un
+   segundo pedido idéntico: si ya tiene un pedido pendiente con exactamente
+   los mismos artículos, mostramos la confirmación en vez del botón. */
+async function pageInit(){
+  if(sbCustomerAuth.isAuthenticated()){
+    try{
+      const clave=items=>items.map(i=>i.id+':'+i.q).sort().join(',');
+      const propia=clave(selectedPurchase());
+      const activo=(await sbCustomerOrders.mine()).find(o=>o.payment==='Por revisar' && clave(o.items)===propia);
+      if(activo) pedidoConfirmado={id:activo.id};
+    }catch(e){}
+  }
+  renderTransfer();
+}
 </script></body></html>
