@@ -136,7 +136,7 @@ const getCart = () => {
     return raw.filter(i=>byId(i.id) && Number.isInteger(i.q) && i.q>0).map(i=>({id:i.id,q:Math.min(i.q,byId(i.id).stock ?? Infinity)})).filter(i=>i.q>0);
   } catch(e){ return []; }
 };
-const setCart = c => { try { localStorage.setItem(CART_KEY, JSON.stringify(c)); } catch(e){} renderCart(); };
+const setCart = c => { try { localStorage.setItem(CART_KEY, JSON.stringify(c)); } catch(e){} renderCart(); if(typeof onCartChange === "function") onCartChange(); };
 
 function addToCart(id, qty=1){
   const p=byId(id); if(!p || !Number.isInteger(qty) || qty<1) return;
@@ -218,10 +218,9 @@ function renderCart(){
       <div class="sum-row"><span>${deliveryData().method==='personal'?'Entrega personal':'Envío'}</span><span>${deliveryData().method==='personal'?'Por confirmar':envio? MONEDA(envio) : 'Gratis'}</span></div>
       ${cartTier()!=='normal' ? `<div class="sum-row" style="color:var(--ok)"><span>Precio ${cartTier()} aplicado</span><span>✓</span></div>` : ""}
       <div class="sum-row total"><span>${deliveryData().method==='personal'?'Subtotal sin entrega':'Total con paquetería'}</span><span>${MONEDA(sub+(deliveryData().method==='personal'?0:envio))}</span></div>
-      <div class="purchase-actions">${purchaseActions(c)}</div>
+      <div class="purchase-actions">${purchaseActions(c,null,false)}</div>
       <a class="btn btn-block btn-ghost" href="carrito.html" style="margin-top:8px">Ver la bolsa</a>`;
   }
-  if(typeof onCartChange === "function") onCartChange();
 }
 function changeQty(id, d){
   const c = getCart(); const i = c.find(x=>x.id===id); if(!i) return;
