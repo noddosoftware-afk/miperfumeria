@@ -86,9 +86,30 @@ async function mostrarPedidos(){
         ${o.courier?`<div><dt>Paquetería</dt><dd>${esc(o.courier)}</dd></div>`:''}
         ${o.tracking?`<div><dt>Guía</dt><dd>${esc(o.tracking)}</dd></div>`:'<div><dt>Guía</dt><dd>Aún no disponible</dd></div>'}
       </dl>
+      ${comprobanteHTML(o)}
     </section>`).join('') : '<p class="purchase-note">Todavía no tienes pedidos por transferencia registrados.</p>')
     + `<a class="btn btn-ghost" href="catalogo.html">Ver catálogo</a> <button class="btn btn-ghost" id="salir" type="button" style="margin-left:10px">Cerrar sesión</button>`;
   document.getElementById('salir').onclick=()=>{ sbCustomerAuth.signOut(); mostrarAcceso(); };
+  box.querySelectorAll('form.form-comprobante').forEach(form=>{
+    form.addEventListener('submit', async e=>{
+      e.preventDefault();
+      const id=form.dataset.order, f=new FormData(form), file=f.get('archivo'), err=form.querySelector('.err-comprobante');
+      err.textContent='';
+      if(!file||!file.size){ err.textContent='Elige un archivo.'; return; }
+      try{
+        await sbComprobantes.subir(file, id);
+        form.closest('.comprobante-box').innerHTML='<p class="purchase-note">✅ Comprobante recibido. Damián lo verá en el panel.</p>';
+        toast('Comprobante subido.');
+      }catch(ex){ err.textContent=ex.message||'No se pudo subir el comprobante.'; }
+    });
+  });
+}
+/* Si el cliente cerró la página antes de subir su comprobante, aquí puede
+   volver y subirlo después sin depender de checkout.html. */
+function comprobanteHTML(o){
+  if(o.payment!=='Por revisar') return '';
+  if(o.comprobante_path) return '<div class="comprobante-box"><p class="purchase-note">✅ Ya recibimos tu comprobante de pago.</p></div>';
+  return `<div class="comprobante-box"><form class="form-comprobante" data-order="${esc(o.id)}"><label class="field"><span>Subir foto o captura del comprobante</span><input type="file" name="archivo" accept="image/png,image/jpeg,image/webp,application/pdf" required></label><p class="purchase-note err-comprobante" role="alert"></p><button class="btn btn-block btn-ghost" type="submit">Subir comprobante</button></form></div>`;
 }
 </script>
 </body>
