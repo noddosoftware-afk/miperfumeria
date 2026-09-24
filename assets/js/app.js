@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (f) f.innerHTML = buildFooter();
   initUI();
   renderCart();
+  renderFavCount();
   if (typeof pageInit === "function") pageInit();
   mountDelivery();
   if (typeof apartadoRestante === "function" && apartadoRestante() > 0) startHoldTicker();
@@ -146,8 +147,10 @@ function toggleFavorito(id){
   const f = getFavoritos(), i = f.indexOf(id);
   if(i>-1) f.splice(i,1); else f.push(id);
   try{ localStorage.setItem(FAV_KEY, JSON.stringify(f)); }catch{}
+  renderFavCount();
   return i<0; // true si se acaba de agregar
 }
+function renderFavCount(){ const fc=$("#favCount"); if(fc) fc.textContent = getFavoritos().length; }
 
 function addToCart(id, qty=1){
   const p=byId(id); if(!p || !Number.isInteger(qty) || qty<1) return;
@@ -263,7 +266,7 @@ function filtrar(){
   else if(f === "oferta") arr = arr.filter(p=>p.oferta || (p.lista && p.lista > p.precio));
   else if(f === "favoritos") arr = arr.filter(p=>esFavorito(p.id));
   else if(["hombre","mujer","unisex"].includes(f)) arr = arr.filter(p=>p.genero===f);
-  else if(["arabe","disenador"].includes(f)) arr = arr.filter(p=>p.cat===f);
+  else if(["arabe","disenador","nicho"].includes(f)) arr = arr.filter(p=>p.cat===f);
   if(m)   arr = arr.filter(p=>p.marca===m);
   if(fam) arr = arr.filter(p=>p.familia===fam);
   if(max) arr = arr.filter(p=>p.precio<=max);

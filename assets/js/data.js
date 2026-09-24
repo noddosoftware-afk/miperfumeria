@@ -833,6 +833,7 @@ const CATEGORIAS = [
   {slug:"unisex",     titulo:"Unisex",             desc:"Fragancias que funcionan igual de bien para cualquiera."},
   {slug:"arabe",      titulo:"Perfumes árabes",    desc:"Rasasi, Armaf y Lattafa: alto rendimiento y precio accesible."},
   {slug:"disenador",  titulo:"Diseñador",          desc:"Dior, Chanel, Versace, YSL y más, 100% originales."},
+  {slug:"nicho",      titulo:"Perfumes de nicho",  desc:"Fragancias exclusivas y de tiraje limitado, para quienes buscan algo distinto."},
   {slug:"best",       titulo:"Los más vendidos",   desc:"Lo que más sale de la tienda cada semana."},
   {slug:"nuevo",      titulo:"Novedades",          desc:"Últimas llegadas al inventario."},
   {slug:"oferta",     titulo:"Ofertas",            desc:"Precios especiales por tiempo limitado."},
