@@ -12,11 +12,11 @@ function urlBase64ToUint8Array(base64){
 }
 async function registrarSW(){
   if(!('serviceWorker' in navigator)) return null;
-  try{ return await navigator.serviceWorker.register('assets/js/sw-admin.js'); }catch{ return null; }
+  try{ return await navigator.serviceWorker.register('sw-admin.js', {scope: '/'}); }catch{ return null; }
 }
 async function estadoNotificaciones(){
   if(!('serviceWorker' in navigator) || !('PushManager' in window)) return 'no-soportado';
-  const reg = await navigator.serviceWorker.getRegistration('assets/js/sw-admin.js');
+  const reg = await navigator.serviceWorker.getRegistration('/');
   const sub = reg ? await reg.pushManager.getSubscription() : null;
   return sub ? 'activo' : 'inactivo';
 }
@@ -34,7 +34,7 @@ async function activarNotificaciones(){
   });
 }
 async function desactivarNotificaciones(){
-  const reg = await navigator.serviceWorker.getRegistration('assets/js/sw-admin.js');
+  const reg = await navigator.serviceWorker.getRegistration('/');
   const sub = reg ? await reg.pushManager.getSubscription() : null;
   if(sub){
     await sbAuth.request('/rest/v1/push_subscriptions?endpoint=eq.'+encodeURIComponent(sub.endpoint), {method:'DELETE'});
