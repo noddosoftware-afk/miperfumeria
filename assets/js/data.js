@@ -851,6 +851,7 @@ const TIENDA = {
   correo:"",                            // Correo público pendiente de confirmar
   envioGratisPiezas:3,
   mayoreoMonto:4000,
+  distribuidorMonto:10000, // Solo entregas dentro de México
   paqueteria:"Skydrop",
   transferencia:{banco:"BBVA", beneficiario:"Martha Xochitl Loeza", cuenta:"012233028583280647", tipo:"CLABE"} // Confirmado por el cliente
 };

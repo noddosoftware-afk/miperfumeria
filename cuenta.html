@@ -109,7 +109,8 @@ async function mostrarPedidos(){
 function comprobanteHTML(o){
   if(o.payment!=='Por revisar') return '';
   if(o.comprobante_path) return '<div class="comprobante-box"><p class="purchase-note">✅ Ya recibimos tu comprobante de pago.</p></div>';
-  return `<div class="comprobante-box"><form class="form-comprobante" data-order="${esc(o.id)}"><label class="field"><span>Subir foto o captura del comprobante</span><input type="file" name="archivo" accept="image/png,image/jpeg,image/webp,application/pdf" required></label><p class="purchase-note err-comprobante" role="alert"></p><button class="btn btn-block btn-ghost" type="submit">Subir comprobante</button></form></div>`;
+  const pct=o.method==='personal'?30:100;
+  return `<div class="comprobante-box"><form class="form-comprobante" data-order="${esc(o.id)}"><label class="field"><span>Subir foto o captura del comprobante del ${pct}% ${o.method==='personal'?'de anticipo':'del pago'}</span><input type="file" name="archivo" accept="image/png,image/jpeg,image/webp,application/pdf" required></label><p class="purchase-note err-comprobante" role="alert"></p><button class="btn btn-block btn-ghost" type="submit">Subir comprobante</button></form></div>`;
 }
 </script>
 </body>

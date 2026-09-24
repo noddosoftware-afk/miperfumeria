@@ -151,8 +151,21 @@ function addToCart(id, qty=1){
 }
 const cartCount = () => getCart().reduce((s,i)=>s+i.q, 0);
 const cartBaseTotal = () => getCart().reduce((s,i)=>s + byId(i.id).precio*i.q, 0);
-const cartWholesale = () => cartBaseTotal() >= TIENDA.mayoreoMonto;
-const cartUnitPrice = p => cartWholesale() && p.mayoreo ? p.mayoreo : p.precio;
+/* Mayoreo y distribuidor se aplican solos según el subtotal del pedido,
+   igual de automático uno que el otro — nadie tiene que pedirlo aparte. */
+const cartTier = () => {
+  const base = cartBaseTotal();
+  if(base >= TIENDA.distribuidorMonto) return 'distribuidor';
+  if(base >= TIENDA.mayoreoMonto) return 'mayoreo';
+  return 'normal';
+};
+const cartWholesale = () => cartTier() !== 'normal';
+const cartUnitPrice = p => {
+  const tier = cartTier();
+  if(tier === 'distribuidor' && p.distribuidor) return p.distribuidor;
+  if(tier === 'mayoreo' && p.mayoreo) return p.mayoreo;
+  return p.precio;
+};
 const cartTotal = () => getCart().reduce((s,i)=>s + cartUnitPrice(byId(i.id))*i.q, 0);
 /* Sin inventario capturado (null) = disponible, se vende sin llevar conteo.
    Solo 0 exacto es agotado: en ese caso se oculta de todo listado (ver
@@ -203,7 +216,7 @@ function renderCart(){
     foot.innerHTML = `
       <div class="sum-row"><span>Subtotal (${piezas} pza)</span><span>${MONEDA(sub)}</span></div>
       <div class="sum-row"><span>${deliveryData().method==='personal'?'Entrega personal':'Envío'}</span><span>${deliveryData().method==='personal'?'Por confirmar':envio? MONEDA(envio) : 'Gratis'}</span></div>
-      ${cartWholesale() ? `<div class="sum-row" style="color:var(--ok)"><span>Precio mayoreo aplicado</span><span>✓</span></div>` : ""}
+      ${cartTier()!=='normal' ? `<div class="sum-row" style="color:var(--ok)"><span>Precio ${cartTier()} aplicado</span><span>✓</span></div>` : ""}
       <div class="sum-row total"><span>${deliveryData().method==='personal'?'Subtotal sin entrega':'Total con paquetería'}</span><span>${MONEDA(sub+(deliveryData().method==='personal'?0:envio))}</span></div>
       <div class="purchase-actions">${purchaseActions(c)}</div>
       <a class="btn btn-block btn-ghost" href="carrito.html" style="margin-top:8px">Ver la bolsa</a>`;
@@ -278,19 +291,20 @@ function purchaseItems(items){
 }
 function purchaseQuote(items){
   const clean=purchaseItems(items);
-  const wholesale=clean.reduce((s,i)=>s+byId(i.id).precio*i.q,0)>=TIENDA.mayoreoMonto;
-  const lines=clean.map(i=>{const p=byId(i.id);return {...i,p,unit:wholesale&&p.mayoreo?p.mayoreo:p.precio};});
+  const base=clean.reduce((s,i)=>s+byId(i.id).precio*i.q,0);
+  const tier=base>=TIENDA.distribuidorMonto?'distribuidor':base>=TIENDA.mayoreoMonto?'mayoreo':'normal';
+  const lines=clean.map(i=>{const p=byId(i.id);const unit=(tier==='distribuidor'&&p.distribuidor)?p.distribuidor:(tier==='mayoreo'&&p.mayoreo)?p.mayoreo:p.precio;return {...i,p,unit};});
   const units=lines.reduce((s,i)=>s+i.q,0);
   const subtotal=lines.reduce((s,i)=>s+i.unit*i.q,0);
   const shipping=units && units<TIENDA.envioGratisPiezas?149:0;
-  return {lines,units,subtotal,shipping,total:subtotal+shipping,wholesale};
+  return {lines,units,subtotal,shipping,total:subtotal+shipping,tier,wholesale:tier!=='normal'};
 }
 function purchaseMessage(items,receipt=false){
   const q=purchaseQuote(items);
   if(!q.lines.length)return '';
   return [receipt?'Hola, miperfumeria. Quiero enviar el comprobante de transferencia de esta compra:':'Hola, miperfumeria. Me gustaría comprar:',
     '',...q.lines.map(i=>`${i.q} × ${i.p.marca} ${i.p.nombre} (${i.p.ml})\nSKU: ${i.id}\nPrecio unitario: ${MONEDA(i.unit)} MXN · Importe: ${MONEDA(i.unit*i.q)} MXN${i.p.contenido?'\nIncluye: '+i.p.contenido.join(', '):''}`),
-    '',q.wholesale?'Precio de mayoreo aplicado según el monto.':'Precio normal.',
+    '',q.tier==='distribuidor'?'Precio de distribuidor aplicado según el monto.':q.tier==='mayoreo'?'Precio de mayoreo aplicado según el monto.':'Precio normal.',
     `Subtotal: ${MONEDA(q.subtotal)} MXN`,
     deliveryData().method==='personal'?'Entrega personal: costo por confirmar.':`Envío por paquetería: ${q.shipping?MONEDA(q.shipping)+' MXN':'gratis (3 piezas o más)'}`,
     deliveryData().method==='personal'?`Subtotal de perfumes: ${MONEDA(q.subtotal)} MXN (entrega pendiente de cotizar).`:`Total con paquetería: ${MONEDA(q.total)} MXN`,
