@@ -399,12 +399,15 @@ function mountDelivery(){
  <label class="field"><span>Horario preferido (entrega personal)</span><input name="schedule" placeholder="Por ejemplo, viernes por la tarde" maxlength="120"></label>
  <label class="field full"><span>Dirección</span><input name="address" autocomplete="street-address" maxlength="220"></label>
  <label class="field full"><span>Referencias</span><input name="reference" maxlength="220"></label></div>
- <p class="purchase-note" id="deliveryExplanation"></p></details>`;
+ <p class="purchase-note" id="deliveryExplanation"></p><div id="deliveryPersonalContact"></div></details>`;
  const data=deliveryData();target.querySelectorAll('input,select').forEach(el=>{el.value=data[el.name]||'';el.addEventListener('input',()=>{const next={};target.querySelectorAll('input,select').forEach(x=>next[x.name]=x.value.trim());try{sessionStorage.setItem('mp_delivery',JSON.stringify(next));}catch{}refreshDelivery();});});refreshDelivery();
 }
 function refreshDelivery(){
  document.querySelectorAll('[data-purchase]').forEach(a=>{try{a.href=purchaseURL(JSON.parse(decodeURIComponent(a.dataset.purchase)),a.dataset.receipt==='true');}catch{}});
- const note=document.getElementById('deliveryExplanation');if(note)note.textContent=deliveryData().method==='personal'?'El dueño confirmará cobertura, costo y horario. La hora indicada es una solicitud.':'Paquetería: $149, gratis desde 3 piezas. El tiempo de llegada se confirma según destino.';
+ const esPersonal=deliveryData().method==='personal';
+ const note=document.getElementById('deliveryExplanation');if(note)note.textContent=esPersonal?'Entrega personal disponible en Salamanca, Irapuato y Valle de Santiago. Se solicita 30% de anticipo por transferencia; el resto se liquida al recibir. La hora indicada es una solicitud.':'Paquetería: $149, gratis desde 3 piezas. El tiempo de llegada se confirma según destino.';
+ const contacto=document.getElementById('deliveryPersonalContact');
+ if(contacto)contacto.innerHTML=esPersonal?`<a class="btn btn-ghost btn-block" href="${TIENDA.whatsapp}?text=${encodeURIComponent('Hola, quiero coordinar el lugar y horario de mi entrega personal.')}" target="_blank" rel="noopener">Coordinar lugar y horario por WhatsApp</a>`:'';
  const schedule=document.querySelector('#deliveryChoice [name="schedule"]');if(schedule)schedule.disabled=deliveryData().method!=='personal';
  renderCart();
  if(typeof onDeliveryChange === 'function') onDeliveryChange();
