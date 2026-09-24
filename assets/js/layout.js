@@ -62,7 +62,6 @@ const NAV = [
     {h:"Colecciones", items:[["Eau de Parfum","catalogo.html?f=disenador"],["Clásicos de noche","catalogo.html?fam=Oriental"],["Para oficina","catalogo.html?fam=Amaderado"],["Ver todo diseñador","catalogo.html?f=disenador"]]}
   ]},
   {t:"Más vendidos", h:"catalogo.html?f=best"},
-  {t:"Disponible ahora", h:"catalogo.html?f=inventario"},
   {t:"Mayoreo", h:"mayoreo.html"}
 ];
 
@@ -143,8 +142,6 @@ function buildHeader(){
   <nav>
     ${NAV.map(n=>`<a href="${n.h}">${n.t}</a>`).join("")}
     <div class="mm-sub">
-      <a href="autenticidad.html">Garantía de autenticidad</a>
-      <a href="ayuda.html">Envíos, pagos y preguntas</a>
       <a href="contacto.html">Contacto</a>
       <a href="${TIENDA.instagram}" target="_blank" rel="noopener">Instagram ${TIENDA.instagramUser}</a>
     </div>
