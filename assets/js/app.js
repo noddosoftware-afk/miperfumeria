@@ -120,7 +120,6 @@ function cardHTML(p){
       <span class="price-now">${MONEDA(p.precio)}</span>
       ${p.lista ? `<span class="price-was">${MONEDA(p.lista)}</span><span class="price-off">-${off}%</span>` : ""}
     </div>
-    ${p.mayoreo ? `<div class="card-tiers"><span>Mayoreo <b>${MONEDA(p.mayoreo)}</b></span><span>Distribuidor <b>${MONEDA(p.distribuidor)}</b></span></div>` : ''}
     <div class="card-stock ${p.stock===1?'last-unit':''}">${stockText(p)}</div>
     <div class="card-buy">${purchaseActions([{id:p.id,q:1}],p.id)}</div>
   </div>
