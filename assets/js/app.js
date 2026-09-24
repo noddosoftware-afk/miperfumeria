@@ -17,7 +17,23 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (typeof pageInit === "function") pageInit();
   mountDelivery();
   if (typeof apartadoRestante === "function" && apartadoRestante() > 0) startHoldTicker();
+  mostrarAvisoCookies();
 });
+
+/* Aviso de uso de almacenamiento del navegador (carrito, sesión, favoritos).
+   No usamos cookies de rastreo ni publicidad — es solo informativo, una vez
+   por navegador. */
+function mostrarAvisoCookies(){
+  try{ if(localStorage.getItem('mp_cookies_ok')) return; }catch{ return; }
+  const div = document.createElement('div');
+  div.id = 'cookieBanner';
+  div.innerHTML = `<p>Usamos el almacenamiento de tu navegador para recordar tu bolsa, tu sesión y tus favoritos — no usamos cookies de rastreo ni de publicidad. <a href="ayuda.html#privacidad">Más información</a></p><button type="button" id="cookieOk">Entendido</button>`;
+  document.body.appendChild(div);
+  document.getElementById('cookieOk').onclick = () => {
+    try{ localStorage.setItem('mp_cookies_ok','1'); }catch{}
+    div.remove();
+  };
+}
 
 /* ---------- utilidades ---------- */
 const $  = (s, c = document) => c.querySelector(s);

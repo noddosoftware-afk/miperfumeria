@@ -714,3 +714,10 @@ section.tight{padding:clamp(28px,3.5vw,44px) 0}
 .hold-bar{background:#fdf5e6;border-left:3px solid #c8962c;padding:12px 14px;margin:14px 0;font-size:11.5px;color:var(--navy);line-height:1.55}
 .hold-bar b{font-variant-numeric:tabular-nums;font-size:13px}
 .hold-bar .hold-note{display:block;color:var(--muted-2);margin-top:3px}
+
+/* Aviso de almacenamiento del navegador */
+#cookieBanner{position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--navy);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap}
+#cookieBanner p{margin:0;font-size:12px;line-height:1.5;max-width:640px}
+#cookieBanner a{color:#fff;text-decoration:underline}
+#cookieBanner button{flex-shrink:0;background:#fff;color:var(--navy);border:0;padding:10px 20px;font-family:var(--f-brand);font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+@media(max-width:640px){#cookieBanner{padding:14px 16px;gap:12px}#cookieBanner button{width:100%}}
