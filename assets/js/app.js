@@ -230,7 +230,7 @@ function renderCart(){
       ${cartTier()!=='normal' ? `<div class="sum-row" style="color:var(--ok)"><span>Precio ${cartTier()} aplicado</span><span>✓</span></div>` : ""}
       <div class="sum-row total"><span>${deliveryData().method==='personal'?'Subtotal sin entrega':'Total con paquetería'}</span><span>${MONEDA(sub+(deliveryData().method==='personal'?0:envio))}</span></div>
       <div class="purchase-actions">${purchaseActions(c,null,false)}</div>
-      <a class="btn btn-block btn-ghost" href="carrito.html" style="margin-top:8px">Ver la bolsa</a>`;
+      <a class="btn btn-block btn-ghost" href="carrito.html" style="margin-top:8px">${ICON.carrito}Ver carrito</a>`;
   }
 }
 function changeQty(id, d){
@@ -331,7 +331,7 @@ function purchaseActions(items,id=null,mostrarBolsa=true,botonAgregar=false){
   const confirmar='checkout.html'+(id?'?id='+encodeURIComponent(id)+'&qty='+clean[0].q:'');
   const bolsa=!mostrarBolsa?'':botonAgregar&&id
     ?`<button type="button" class="btn btn-block btn-ghost" data-add="${id}" data-qty="${clean[0].q}">Añadir a la bolsa</button>`
-    :'<a class="btn btn-block btn-ghost" href="carrito.html">Ver la bolsa</a>';
+    :`<a class="btn btn-block btn-ghost" href="carrito.html">${ICON.carrito}Ver carrito</a>`;
   return bolsa
     +`<a class="btn btn-block confirm-buy" href="${confirmar}">Confirmar</a>`;
 }
