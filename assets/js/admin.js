@@ -47,12 +47,12 @@ let view='overview', editing=null;const total=o=>o.items.reduce((s,i)=>s+i.price
 function notify(t){$('#adminToast').textContent=t;$('#adminToast').classList.add('on');setTimeout(()=>$('#adminToast').classList.remove('on'),2800)}
 const tag=(t,kind='')=>`<span class="tag ${kind}">${esc(t)}</span>`;
 const statusOptions=['Por preparar','Programado','En camino','Entregado'];
-const paymentOptions=['Pendiente','Por revisar','Confirmado'];
+const paymentOptions=['Pendiente','Por revisar','Confirmado','Vencido'];
 const select=(name,label,opts,value)=>`<label>${label}<select name="${name}">${opts.map(x=>`<option ${x===value?'selected':''}>${esc(x)}</option>`).join('')}</select></label>`;
 const input=(name,label,value='',type='text',required=false)=>`<label>${label}<input name="${name}" type="${type}" value="${esc(value)}" ${required?'required':''} ${type==='number'?'min="0" step="1"':''} maxlength="220"></label>`;
 function go(v){view=v;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));$('#viewTitle').textContent=({overview:'Resumen de la tienda',inventory:'Productos e inventario',orders:'Pedidos y pagos',deliveries:'Agenda de entregas',customers:'Clientes',settings:'Datos de la tienda'})[v];render()}
 function table(head,rows){return `<div class="table-scroll"><table><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`}
-function orderRows(arr){return arr.map(o=>`<tr><td><b>${esc(o.id)}</b><br><span class="muted">${esc(o.channel)}</span></td><td>${esc(o.customer)}<br><span class="muted">${esc(o.city)}</span></td><td>${money(total(o))}</td><td>${tag(o.payment,o.payment==='Confirmado'?'ok':'warn')}</td><td>${tag(o.status)}</td><td><button class="small-button" data-order="${esc(o.id)}">Ver pedido</button></td></tr>`)}
+function orderRows(arr){return arr.map(o=>`<tr><td><b>${esc(o.id)}</b><br><span class="muted">${esc(o.channel)}</span></td><td>${esc(o.customer)}<br><span class="muted">${esc(o.city)}</span></td><td>${money(total(o))}</td><td>${tag(o.payment,o.payment==='Confirmado'?'ok':o.payment==='Vencido'?'':'warn')}</td><td>${tag(o.status)}</td><td><button class="small-button" data-order="${esc(o.id)}">Ver pedido</button></td></tr>`)}
 function render(){
  const v=$('#view');const active=orders.filter(o=>o.status!=='Entregado');const paid=orders.filter(o=>o.payment==='Confirmado');const low=PRODUCTOS.filter(p=>p.stock!==null&&p.stock<=2);
  if(view==='overview'){
