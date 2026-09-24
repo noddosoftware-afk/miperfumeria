@@ -1,4 +1,46 @@
 const $=s=>document.querySelector(s), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* Panel instalable como app + notificaciones push cuando llega un pedido
+   nuevo por transferencia. La llave pública VAPID es segura de exponer
+   aquí (es la contraparte pública de la privada que solo tiene la función
+   notify-orders); sirve para que el navegador cifre hacia ese par de llaves. */
+const VAPID_PUBLIC_KEY = 'BGB-wFDXoE9ioFPp0-968MNWFQviWZiCsmlynHBhfd2sAGJTwxlqtPl5smUkohj0GclDuQfBvXTppHa_xll051U';
+function urlBase64ToUint8Array(base64){
+  const pad = '='.repeat((4 - base64.length % 4) % 4);
+  const raw = atob((base64 + pad).replace(/-/g,'+').replace(/_/g,'/'));
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+async function registrarSW(){
+  if(!('serviceWorker' in navigator)) return null;
+  try{ return await navigator.serviceWorker.register('assets/js/sw-admin.js'); }catch{ return null; }
+}
+async function estadoNotificaciones(){
+  if(!('serviceWorker' in navigator) || !('PushManager' in window)) return 'no-soportado';
+  const reg = await navigator.serviceWorker.getRegistration('assets/js/sw-admin.js');
+  const sub = reg ? await reg.pushManager.getSubscription() : null;
+  return sub ? 'activo' : 'inactivo';
+}
+async function activarNotificaciones(){
+  const permiso = await Notification.requestPermission();
+  if(permiso !== 'granted') throw new Error('Bloqueaste el permiso de notificaciones en el navegador.');
+  const reg = await registrarSW();
+  if(!reg) throw new Error('Este navegador no soporta notificaciones push.');
+  await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
+  const j = sub.toJSON();
+  await sbAuth.request('/rest/v1/push_subscriptions?on_conflict=endpoint', {
+    method: 'POST', headers: {Prefer: 'resolution=merge-duplicates'},
+    body: JSON.stringify({ user_id: sbAuth.session().user_id, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth })
+  });
+}
+async function desactivarNotificaciones(){
+  const reg = await navigator.serviceWorker.getRegistration('assets/js/sw-admin.js');
+  const sub = reg ? await reg.pushManager.getSubscription() : null;
+  if(sub){
+    await sbAuth.request('/rest/v1/push_subscriptions?endpoint=eq.'+encodeURIComponent(sub.endpoint), {method:'DELETE'});
+    await sub.unsubscribe();
+  }
+}
 const money=n=>MONEDA(n)+' MXN', today=new Date().toLocaleDateString('en-CA'), find=id=>PRODUCTOS.find(p=>p.id===id);
 let orders=[];
 let view='overview', editing=null;const total=o=>o.items.reduce((s,i)=>s+i.price*i.q,0);
@@ -25,7 +67,7 @@ function render(){
  if(view==='orders'){v.innerHTML=`<section class="panel"><div class="panel-head"><h2>Registro de pedidos</h2></div><div class="toolbar"><input type="search" id="orderSearch" placeholder="Buscar pedido, cliente o ciudad" aria-label="Buscar pedido"><select id="paymentFilter" aria-label="Estado de pago"><option>Todos los pagos</option>${paymentOptions.map(x=>`<option>${x}</option>`).join('')}</select></div><div id="ordersTable"></div></section>`;renderOrders();$('#orderSearch').oninput=renderOrders;$('#paymentFilter').onchange=renderOrders;}
  if(view==='deliveries'){v.innerHTML=`<section class="panel"><div class="panel-head"><div><h2>Organiza cada entrega</h2><p class="note">Un horario solicitado queda pendiente hasta que lo confirmes en el pedido.</p></div></div><div class="toolbar"><label>Fecha<input type="date" id="deliveryDate" value="${today}"></label><label>Modalidad<select id="deliveryFilter"><option value="all">Todas</option><option value="personal">Entrega personal</option><option value="paqueteria">Paquetería</option></select></label><button id="allDates">Ver todas las fechas</button></div><div id="deliveryList"></div></section>`;renderDeliveries();$('#deliveryDate').onchange=renderDeliveries;$('#deliveryFilter').onchange=renderDeliveries;$('#allDates').onclick=()=>{$('#deliveryDate').value='';renderDeliveries()};}
  if(view==='customers'){const clients={};orders.forEach(o=>{const key=o.customer.trim().toLowerCase();(clients[key]??={name:o.customer,city:o.city,count:0,paid:0}).count++;if(o.payment==='Confirmado')clients[key].paid+=total(o)});v.innerHTML=`<section class="panel"><h2>Clientes de los pedidos registrados</h2><p class="note">Datos de ejemplo o capturados localmente. No se importan conversaciones de WhatsApp.</p>${table(['Cliente','Ciudad','Pedidos','Productos · cobro confirmado'],Object.values(clients).map(c=>`<tr><td>${esc(c.name)}</td><td>${esc(c.city)}</td><td>${c.count}</td><td>${money(c.paid)}</td></tr>`))}</section>`;}
- if(view==='settings'){v.innerHTML=`<section class="panel"><h2>Información confirmada</h2><dl class="settings"><div><dt>WhatsApp Business</dt><dd>81 8686 6622</dd><dt>Pago</dt><dd>Transferencia, comprobante por WhatsApp</dd><dt>Envío por paquetería</dt><dd>$149 · Gratis desde 3 piezas</dd><dt>Cuenta para transferencia</dt><dd>BBVA · Martha Xochitl Loeza</dd></div><div><dt>Dominio elegido</dt><dd>miperfumeria.com.mx<br><small class="muted">Publicado y en línea</small></dd><dt>Instagram y TikTok</dt><dd>@miperfumeriamx</dd><dt>Mayoreo</dt><dd>Desde $4,000; distribuidor por confirmar</dd></div></dl></section><section class="panel"><h2>Pendiente de definir con el dueño</h2><p>Zonas, costos y horarios de entrega personal.</p><p>Duración de los apartados y condiciones de distribuidor.</p><p>Unificar las soluciones por daños: cambio, reembolso o saldo a favor.</p><p class="note">La dirección de recolección y las credenciales de servicios no se incluyen en los archivos públicos.</p></section><section class="panel"><h2>Mensajes de atención</h2><p class="note">En cada pedido puedes preparar y copiar un agradecimiento, una solicitud de horario o una actualización de envío. Esta demo no envía mensajes automáticamente.</p><p class="note">El panel usa acceso con correo y contraseña, y los datos se guardan en la base de datos de la tienda, disponibles desde cualquier dispositivo.</p></section>`;}
+ if(view==='settings'){v.innerHTML=`<section class="panel"><h2>Instalar como app y notificaciones</h2><p class="note">Instala este panel en tu celular o computadora para abrirlo como una app, con un icono propio, y recibe una notificación cada vez que llegue un pedido nuevo por transferencia — aunque el panel esté cerrado.</p><div id="notifStatus"><p class="note">Consultando…</p></div></section><section class="panel"><h2>Información confirmada</h2><dl class="settings"><div><dt>WhatsApp Business</dt><dd>81 8686 6622</dd><dt>Pago</dt><dd>Transferencia, comprobante por WhatsApp</dd><dt>Envío por paquetería</dt><dd>$149 · Gratis desde 3 piezas</dd><dt>Cuenta para transferencia</dt><dd>BBVA · Martha Xochitl Loeza</dd></div><div><dt>Dominio elegido</dt><dd>miperfumeria.com.mx<br><small class="muted">Publicado y en línea</small></dd><dt>Instagram y TikTok</dt><dd>@miperfumeriamx</dd><dt>Mayoreo</dt><dd>Desde $4,000; distribuidor por confirmar</dd></div></dl></section><section class="panel"><h2>Pendiente de definir con el dueño</h2><p>Zonas, costos y horarios de entrega personal.</p><p>Duración de los apartados y condiciones de distribuidor.</p><p>Unificar las soluciones por daños: cambio, reembolso o saldo a favor.</p><p class="note">La dirección de recolección y las credenciales de servicios no se incluyen en los archivos públicos.</p></section><section class="panel"><h2>Mensajes de atención</h2><p class="note">En cada pedido puedes preparar y copiar un agradecimiento, una solicitud de horario o una actualización de envío. Esta demo no envía mensajes automáticamente.</p><p class="note">El panel usa acceso con correo y contraseña, y los datos se guardan en la base de datos de la tienda, disponibles desde cualquier dispositivo.</p></section>`;renderNotifPanel();}
 }
 function renderInventory(){const q=$('#productSearch').value.toLowerCase(),f=$('#stockFilter').value;const arr=PRODUCTOS.filter(p=>(p.marca+' '+p.nombre).toLowerCase().includes(q)&&(f==='all'||f==='available'&&p.stock>0||f==='confirmed'&&p.stock!=null||f==='low'&&p.stock!=null&&p.stock<=2&&p.stock>0||f==='zero'&&p.stock===0));$('#inventoryTable').innerHTML=arr.length?table(['Producto','Stock','Normal','Mayoreo','Distribuidor',''],arr.map(p=>`<tr><td><div class="product-cell"><img src="${esc(p.imagen)}" alt=""><div><b>${esc(p.nombre)}</b><small>${esc(p.marca)} · ${esc(p.ml)}</small></div></div></td><td>${p.stock==null?tag('Sin confirmar'):tag(p.stock===0?'Agotado':p.stock+(p.contenido?' sets':' unidades'),p.stock<=2?'warn':'ok')}</td><td>${MONEDA(p.precio)}</td><td>${p.mayoreo?MONEDA(p.mayoreo):'—'}</td><td>${p.distribuidor?MONEDA(p.distribuidor):'—'}</td><td><button class="small-button" data-product="${p.id}">Editar</button></td></tr>`)):'<div class="empty">No hay productos con estos filtros.</div>';}
 /* Apartados temporales: lo que un cliente tiene reservado en este momento. */
@@ -71,5 +113,56 @@ $('#logoutBtn').onclick=()=>{sbAuth.signOut();location.href='login.html'};
   if(liveProducts.length){PRODUCTOS.length=0;PRODUCTOS.push(...liveProducts)}
   orders=liveOrders;
  }catch(e){notify('No se pudo conectar con la base de datos. Revisa tu conexión.')}
- go('overview');
+ registrarSW();
+ const vistaPedida = new URLSearchParams(location.search).get('view');
+ go(['overview','inventory','orders','deliveries','customers','settings'].includes(vistaPedida) ? vistaPedida : 'overview');
 })();
+
+/* Instalar como app: Chrome/Android ofrecen este evento para disparar el
+   diálogo de instalación con un botón propio; en iPhone no existe, ahí se
+   instala manualmente desde Safari (instrucciones en renderNotifPanel). */
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if(view === 'settings') renderNotifPanel();
+});
+async function renderNotifPanel(){
+  const box = $('#notifStatus'); if(!box) return;
+  const estado = await estadoNotificaciones();
+  const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  let html = '';
+  html += standalone
+    ? '<p class="note">✓ Ya está instalado como app en este dispositivo.</p>'
+    : `<p class="note"><b>1. Instala el panel:</b> ${esIOS
+        ? 'en Safari, toca el botón de compartir (el cuadro con la flecha hacia arriba) y elige "Agregar a inicio".'
+        : deferredInstallPrompt
+          ? '<button class="small-button" id="btnInstalar" type="button">Instalar app</button>'
+          : 'abre el menú del navegador (⋮) y elige "Instalar app" o "Agregar a la pantalla de inicio".'}</p>`;
+  if(estado === 'no-soportado'){
+    html += `<p class="note">Este navegador no soporta notificaciones push${esIOS && !standalone ? '; en iPhone, primero instala el panel (paso 1) y ábrelo desde el icono de inicio — recién ahí se puede activar' : ''}.</p>`;
+  } else if(estado === 'activo'){
+    html += '<p class="note">✓ Notificaciones activas en este dispositivo.</p><button class="small-button" id="btnNotifOff" type="button">Desactivar</button>';
+  } else {
+    html += '<p class="note"><b>2. Activa las notificaciones</b> para enterarte al instante de cada pedido nuevo por transferencia.</p><button class="primary small-button" id="btnNotifOn" type="button">Activar notificaciones</button>';
+  }
+  box.innerHTML = html;
+  $('#btnInstalar')?.addEventListener('click', async () => {
+    if(!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    renderNotifPanel();
+  });
+  $('#btnNotifOn')?.addEventListener('click', async e => {
+    e.target.disabled = true; e.target.textContent = 'Activando…';
+    try{ await activarNotificaciones(); notify('Notificaciones activadas.'); }
+    catch(err){ notify(err.message || 'No se pudo activar.'); }
+    renderNotifPanel();
+  });
+  $('#btnNotifOff')?.addEventListener('click', async () => {
+    try{ await desactivarNotificaciones(); notify('Notificaciones desactivadas.'); }catch{}
+    renderNotifPanel();
+  });
+}

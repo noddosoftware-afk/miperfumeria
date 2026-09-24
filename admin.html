@@ -1,5 +1,12 @@
 <!doctype html><html lang="es-MX"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel de la tienda | miperfumeria</title>
-<meta name="robots" content="noindex, nofollow"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap"><link rel="stylesheet" href="assets/css/admin.css"></head><body>
+<meta name="robots" content="noindex, nofollow">
+<link rel="manifest" href="manifest-admin.webmanifest">
+<meta name="theme-color" content="#101c3a">
+<link rel="apple-touch-icon" href="assets/img/icons/apple-touch-icon.png">
+<link rel="icon" href="assets/img/icons/favicon-32.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Panel MP">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap"><link rel="stylesheet" href="assets/css/admin.css"></head><body>
 <aside class="sidebar"><a class="admin-brand" href="index.html">MI PERFUMERIA<span>Panel de la tienda</span></a><nav aria-label="Administración"><button data-view="overview" class="active">Resumen</button><button data-view="inventory">Productos e inventario</button><button data-view="orders">Pedidos y pagos</button><button data-view="deliveries">Agenda de entregas</button><button data-view="customers">Clientes</button><button data-view="settings">Datos de la tienda</button></nav><a class="back-store" href="index.html">Ver la tienda</a><button type="button" id="logoutBtn" style="margin-top:14px;background:transparent;border-color:#3a4a6e;color:#c0ccdf">Cerrar sesión</button></aside>
 <main><div class="demo-banner">Datos guardados en la base de datos real de la tienda. Los pedidos marcados como ejemplo son solo demostración.</div><header class="admin-head"><div><p id="today"></p><h1 id="viewTitle">Resumen de la tienda</h1></div><button class="primary" id="newOrder">Registrar pedido</button></header><div id="view"></div></main>
 <dialog id="editor"><form id="editorForm"><div class="dialog-head"><h2 id="editorTitle"></h2><button type="button" id="closeEditor" aria-label="Cerrar">✕</button></div><div id="editorFields"></div><p id="formError" role="alert"></p><div class="dialog-actions"><button type="button" id="cancelEditor">Cancelar</button><button class="primary" type="submit">Guardar</button></div></form></dialog>
