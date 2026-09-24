@@ -36,7 +36,7 @@ function logoSVG(color){
         letter-spacing="-0.5" fill="${c}" textLength="236" lengthAdjust="spacingAndGlyphs">MI PERFUMERI</text>
   <g fill="none" stroke="${c}" stroke-width="2.4" stroke-linejoin="round">
     <rect x="244" y="18" width="29" height="15"/>
-    <path d="M251 18 L258.5 8 L266 18"/>
+    <path d="M244 18 L258.5 8 L273 18"/>
     <circle cx="258.5" cy="5" r="3"/>
   </g>
 </svg>`;
