@@ -114,6 +114,7 @@ function pintar(){
   document.querySelector("#grid").innerHTML = arr.map(cardHTML).join("");
   document.querySelector("#count").textContent = arr.length + (arr.length===1?" producto":" productos");
   document.querySelector("#vacio").style.display = arr.length ? "none" : "block";
+  document.querySelector("#vacio p").textContent = params().get("f")==="favoritos" ? "Todavía no guardaste ningún perfume. Toca el ♡ en cualquier producto para agregarlo aquí." : "No encontramos perfumes con esos filtros.";
 
   // etiquetas activas
   const q = params(), chips = [];

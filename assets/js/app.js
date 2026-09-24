@@ -90,8 +90,8 @@ function initUI(){
   document.addEventListener("click", e => {
     const b = e.target.closest("[data-add]");
     if(b){ e.preventDefault(); addToCart(b.dataset.add, +(b.dataset.qty||1)); }
-    const fv = e.target.closest(".card-fav");
-    if(fv){ e.preventDefault(); fv.classList.toggle("is-on"); toast("Guardado en favoritos"); }
+    const fv = e.target.closest("[data-fav]");
+    if(fv){ e.preventDefault(); const agregado=toggleFavorito(fv.dataset.fav); fv.classList.toggle("is-on", agregado); toast(agregado?"Guardado en favoritos":"Quitado de favoritos"); }
   });
 }
 
@@ -109,7 +109,7 @@ function cardHTML(p){
     ${cardArt(p)}
     <span class="card-quick" data-add="${p.id}">Agregar a la bolsa</span>
   </a>
-  <button class="card-fav" aria-label="Guardar en favoritos">
+  <button class="card-fav ${esFavorito(p.id)?'is-on':''}" data-fav="${p.id}" aria-label="Guardar en favoritos">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20.5s-7.5-4.7-7.5-10A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7.5 2.9c0 5.3-7.5 10-7.5 10z"/></svg>
   </button>
   <div class="card-body">
@@ -137,6 +137,17 @@ const getCart = () => {
   } catch(e){ return []; }
 };
 const setCart = c => { try { localStorage.setItem(CART_KEY, JSON.stringify(c)); } catch(e){} renderCart(); if(typeof onCartChange === "function") onCartChange(); };
+
+/* ---------- favoritos ---------- */
+const FAV_KEY = "mp_favoritos";
+const getFavoritos = () => { try{ const f=JSON.parse(localStorage.getItem(FAV_KEY)); return Array.isArray(f)?f:[]; }catch{ return []; } };
+const esFavorito = id => getFavoritos().includes(id);
+function toggleFavorito(id){
+  const f = getFavoritos(), i = f.indexOf(id);
+  if(i>-1) f.splice(i,1); else f.push(id);
+  try{ localStorage.setItem(FAV_KEY, JSON.stringify(f)); }catch{}
+  return i<0; // true si se acaba de agregar
+}
 
 function addToCart(id, qty=1){
   const p=byId(id); if(!p || !Number.isInteger(qty) || qty<1) return;
@@ -250,6 +261,7 @@ function filtrar(){
   else if(f === "best")   arr = arr.filter(p=>p.best);
   else if(f === "nuevo")  arr = arr.filter(p=>p.nuevo);
   else if(f === "oferta") arr = arr.filter(p=>p.oferta || (p.lista && p.lista > p.precio));
+  else if(f === "favoritos") arr = arr.filter(p=>esFavorito(p.id));
   else if(["hombre","mujer","unisex"].includes(f)) arr = arr.filter(p=>p.genero===f);
   else if(["arabe","disenador"].includes(f)) arr = arr.filter(p=>p.cat===f);
   if(m)   arr = arr.filter(p=>p.marca===m);
@@ -314,10 +326,13 @@ function purchaseMessage(items,receipt=false){
 function purchaseURL(items,receipt=false){
   return TIENDA.whatsapp+'?text='+encodeURIComponent(purchaseMessage(items,receipt));
 }
-function purchaseActions(items,id=null,mostrarBolsa=true){
+function purchaseActions(items,id=null,mostrarBolsa=true,botonAgregar=false){
   const clean=purchaseItems(items);if(!clean.length)return '<p class="purchase-note">No hay productos disponibles para continuar.</p>';
   const confirmar='checkout.html'+(id?'?id='+encodeURIComponent(id)+'&qty='+clean[0].q:'');
-  return (mostrarBolsa?'<a class="btn btn-block btn-ghost" href="carrito.html">Ver la bolsa</a>':'')
+  const bolsa=!mostrarBolsa?'':botonAgregar&&id
+    ?`<button type="button" class="btn btn-block btn-ghost" data-add="${id}" data-qty="${clean[0].q}">Añadir a la bolsa</button>`
+    :'<a class="btn btn-block btn-ghost" href="carrito.html">Ver la bolsa</a>';
+  return bolsa
     +`<a class="btn btn-block confirm-buy" href="${confirmar}">Confirmar</a>`;
 }
 /* ---------- apartado temporal ----------

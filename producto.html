@@ -123,7 +123,7 @@ function pageInit(){
       <div class="stock-line"><i class="dot"></i> ${stockText(p)}</div>
 
       <div id="deliveryChoice"></div>
-      <div class="pdp-actions purchase-actions" id="productPurchase">${purchaseActions([{id:p.id,q:1}],p.id)}</div>
+      <div class="pdp-actions purchase-actions" id="productPurchase">${purchaseActions([{id:p.id,q:1}],p.id,true,true)}</div>
       ${p.stock!==0?`<button class="bag-secondary" onclick="addToCart('${p.id}', +document.getElementById('pdpQty').textContent)">Agregar a la bolsa para combinar perfumes</button>`:''}
       <p class="purchase-note">Te atendemos por WhatsApp para confirmar disponibilidad y entrega. Pago por transferencia.</p>
 
@@ -173,7 +173,7 @@ function pdpQty(d){
   const max=p.stock ?? 99;
   if(+n.textContent+d>max){toast('Existencia disponible: '+max);return;}
   n.textContent = Math.max(1, Math.min(max,+n.textContent+d));
-  document.getElementById("productPurchase").innerHTML=purchaseActions([{id:p.id,q:+n.textContent}],p.id);
+  document.getElementById("productPurchase").innerHTML=purchaseActions([{id:p.id,q:+n.textContent}],p.id,true,true);
 }
 </script>
 </body>

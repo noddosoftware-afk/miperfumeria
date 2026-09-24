@@ -120,7 +120,7 @@ function buildHeader(){
       <a class="brand" href="index.html" aria-label="miperfumeria — inicio">${logoSVG()}</a>
       <div class="header-actions">
         <a class="hicon" href="cuenta.html">${ICON.user}<span>Mi compra</span></a>
-        <a class="hicon" href="catalogo.html">${ICON.fav}<span class="sr">Favoritos</span></a>
+        <a class="hicon" href="catalogo.html?f=favoritos">${ICON.fav}<span class="sr">Favoritos</span></a>
         <button class="hicon" data-open="cart">${ICON.bolsa}<span class="sr">Bolsa</span><em class="cart-count" id="cartCount">0</em></button>
       </div>
     </div>

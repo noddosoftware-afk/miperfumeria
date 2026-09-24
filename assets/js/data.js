@@ -835,7 +835,8 @@ const CATEGORIAS = [
   {slug:"disenador",  titulo:"Diseñador",          desc:"Dior, Chanel, Versace, YSL y más, 100% originales."},
   {slug:"best",       titulo:"Los más vendidos",   desc:"Lo que más sale de la tienda cada semana."},
   {slug:"nuevo",      titulo:"Novedades",          desc:"Últimas llegadas al inventario."},
-  {slug:"oferta",     titulo:"Ofertas",            desc:"Precios especiales por tiempo limitado."}
+  {slug:"oferta",     titulo:"Ofertas",            desc:"Precios especiales por tiempo limitado."},
+  {slug:"favoritos",  titulo:"Mis favoritos",      desc:"Los perfumes que has guardado para volver a verlos."}
 ];
 
 const FAMILIAS = ["Fresco","Amaderado","Oriental","Dulce","Floral","Cítrico"];
