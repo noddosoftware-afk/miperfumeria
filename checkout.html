@@ -80,7 +80,7 @@ function renderTransferencia(items){
     <p class="purchase-note"><b>${metodoEntrega==='personal'?'Entrega personal: solo necesitas transferir y subir el comprobante del 30% de anticipo. El resto se liquida al recibir tu pedido.':'Envío por paquetería: sube el comprobante del 100% del pago para procesar tu pedido.'}</b></p>
     ${pedidoConfirmado?`<div class="confirm-check">
       <svg width="46" height="46" viewBox="0 0 52 52"><circle class="check-circle" cx="26" cy="26" r="24" fill="none"/><path class="check-mark" fill="none" d="M14 27l7 7 16-16"/></svg>
-      <p><b>¡Cuenta y pedido confirmados!</b><br>Folio ${esc(pedidoConfirmado.id)} · Damián lo verá en el panel.</p>
+      <p><b>¡Cuenta y pedido confirmados!</b><br>Folio ${esc(pedidoConfirmado.id)}</p>
     </div>`:`<button class="btn btn-block" id="confirmCheckout" type="button">Confirmar pedido y apartar 10 min para transferir</button>
     <p class="purchase-note">Si todavía vas a seguir comprando, no hace falta apartar: hazlo cuando ya tengas listo tu pedido final. Para dar seguimiento a tu pago necesitas iniciar sesión o crear una cuenta (correo y contraseña).</p>
     <div id="loginInline" hidden>
