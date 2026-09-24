@@ -40,8 +40,8 @@
       </div>
       <div class="tier is-featured">
         <div class="t-name">Mayoreo</div>
-        <div class="t-price">$4,000</div>
-        <div class="t-note">Mínimo por pedido</div>
+        <div class="t-price">$4,000 – $9,999</div>
+        <div class="t-note">Se aplica solo al llegar al monto</div>
         <ul>
           <li>Precio especial por pieza</li>
           <li>Puedes mezclar modelos libremente</li>
@@ -49,18 +49,18 @@
           <li>Lista de disponibilidad actualizada</li>
           <li>Precios específicos por producto</li>
         </ul>
-        <a class="btn btn-block" style="margin-top:20px" href="#solicitar">Solicitar lista</a>
+        <a class="btn btn-block" style="margin-top:20px" href="catalogo.html">Ver catálogo</a>
       </div>
       <div class="tier">
         <div class="t-name">Distribuidor</div>
-        <div class="t-price">$10,000</div>
-        <div class="t-note">Mínimo por pedido · solo dentro de México</div>
+        <div class="t-price">$10,000+</div>
+        <div class="t-note">Se aplica solo al llegar al monto · solo dentro de México</div>
         <ul><li>Tarifa de distribuidor por producto</li><li>Puedes mezclar modelos libremente</li><li>Envío gratis desde 3 piezas</li><li>Atención para armar tu selección</li></ul>
-        <a class="btn btn-ghost btn-block" style="margin-top:20px" href="#solicitar">Consultar condiciones</a>
+        <a class="btn btn-ghost btn-block" style="margin-top:20px" href="catalogo.html">Ver catálogo</a>
       </div>
     </div>
     <p style="text-align:center;color:var(--muted);font-size:12px;margin-top:20px">
-      Todos los precios se muestran en pesos mexicanos. Consulta disponibilidad al confirmar tu pedido.
+      Todos los precios se muestran en pesos mexicanos. El precio de mayoreo o distribuidor se aplica automáticamente al armar tu bolsa, según el subtotal de tu pedido.
     </p>
   </div>
 </section>
@@ -107,25 +107,6 @@
       <div class="rail" id="railMay"></div>
       <button class="rail-btn next">›</button>
     </div>
-  </div>
-</section>
-
-<!-- ============ SOLICITUD ============ -->
-<section id="solicitar">
-  <div class="wrap-narrow">
-    <div class="sec-head"><h2 class="sec-title">Solicita la lista de mayoreo</h2>
-      <p class="sec-sub">Te la enviamos el mismo día</p></div>
-    <form onsubmit="event.preventDefault();toast('Solicitud enviada (demostración)');this.reset()">
-      <div class="form-grid">
-        <label class="field"><span>Nombre</span><input required placeholder="Tu nombre"></label>
-        <label class="field"><span>WhatsApp</span><input required placeholder="10 dígitos"></label>
-        <label class="field"><span>Ciudad</span><input placeholder="Ciudad y estado"></label>
-        <label class="field"><span>Presupuesto aproximado</span>
-          <select><option>$4,000 – $8,000</option><option>$8,000 – $15,000</option><option>Más de $15,000</option><option>Aún no lo defino</option></select></label>
-        <label class="field full"><span>¿Qué tipo de perfume vendes?</span><textarea rows="3" placeholder="Árabes, diseñador, para hombre, para mujer…"></textarea></label>
-      </div>
-      <button class="btn btn-block" type="submit">Enviar solicitud</button>
-    </form>
   </div>
 </section>
 
