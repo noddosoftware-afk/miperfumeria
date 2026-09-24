@@ -14,10 +14,10 @@
 <div id="site-header"></div>
 
 
-<div class="wrap"><div class="breadcrumb"><a href="catalogo.html">Catálogo</a> / <span>Transferencia</span></div></div>
-<div class="plp-head"><div class="wrap"><h1>Tu compra, a un mensaje</h1><p>Consulta los datos de transferencia o continúa con atención personal por WhatsApp.</p></div></div>
+<div class="wrap"><div class="breadcrumb"><a href="catalogo.html">Catálogo</a> / <span>Confirmar pedido</span></div></div>
+<div class="plp-head"><div class="wrap"><h1>Confirma tu pedido</h1><p>Primero tus datos de entrega, luego eliges cómo pagar.</p></div></div>
 <div class="wrap"><div class="checkout">
-  <div><div id="deliveryChoice"></div><div id="transferContent"></div></div>
+  <div><div id="deliveryChoice"></div><div id="pasoContinuar" style="margin-top:16px"></div><div id="pagoOpciones"></div><div id="transferContent"></div></div>
   <aside><div class="summary" id="sum"></div></aside>
 </div></div>
 <div id="site-footer"></div>
@@ -28,17 +28,53 @@
 <script src="assets/js/app.js"></script>
 <script>
 let pedidoConfirmado=null;
-function onCartChange(){pedidoConfirmado=null;renderTransfer();}
-function renderTransfer(){
-  const content=document.getElementById('transferContent'), sum=document.getElementById('sum');
-  if(!content)return;
+let pasoPago=false;   // ya avanzó de "datos y dirección" a "forma de pago"
+let metodoPago=null;  // 'transferencia' una vez elegido
+function onCartChange(){pedidoConfirmado=null;pasoPago=false;metodoPago=null;renderTodo();}
+/* Editar la dirección/modalidad de entrega solo debe refrescar el costo de
+   envío mostrado, no regresar al paso 1 si ya avanzaste a forma de pago. */
+function onDeliveryChange(){renderTodo();}
+
+function renderTodo(){
+  const sum=document.getElementById('sum'), continuarBox=document.getElementById('pasoContinuar'), pagoBox=document.getElementById('pagoOpciones'), transferBox=document.getElementById('transferContent');
+  if(!sum)return;
   const items=selectedPurchase(), q=purchaseQuote(items);
-  if(!q.lines.length){content.innerHTML='<div class="empty-state"><p>Selecciona un perfume para continuar.</p><a class="btn" href="catalogo.html">Ver catálogo</a></div>';sum.innerHTML='';return;}
+  if(!q.lines.length){continuarBox.innerHTML='';pagoBox.innerHTML='';transferBox.innerHTML='<div class="empty-state"><p>Selecciona un perfume para continuar.</p><a class="btn" href="catalogo.html">Ver catálogo</a></div>';sum.innerHTML='';return;}
+
+  sum.innerHTML='<h3>Tu selección</h3>'+q.lines.map(i=>`<div class="transfer-item"><div>${cardArt(i.p)}</div><div><b>${i.p.marca}</b><p>${i.p.nombre}</p><small>${i.p.ml} · Cantidad: ${i.q}</small><p>${MONEDA(i.unit*i.q)} MXN</p></div></div>`).join('')+`
+    <div class="sum-row"><span>Subtotal</span><span>${MONEDA(q.subtotal)}</span></div>
+    ${q.tier==='distribuidor'?'<p class="purchase-note">Precio de distribuidor aplicado.</p>':q.tier==='mayoreo'?'<p class="purchase-note">Precio de mayoreo aplicado.</p>':''}
+    <div class="sum-row"><span>${deliveryData().method==='personal'?'Entrega personal':'Envío por paquetería (estimado)'}</span><span>${deliveryData().method==='personal'?'Por confirmar':q.shipping?MONEDA(q.shipping):'Gratis'}</span></div>
+    <div id="envioReal"></div>
+    <div class="sum-row total"><span>${deliveryData().method==='personal'?'Subtotal sin entrega':'Total con paquetería'}</span><span>${MONEDA(deliveryData().method==='personal'?q.subtotal:q.total)}</span></div>
+    <p class="purchase-note">Precios en MXN. Para entrega personal, acuerda ubicación, costo y horario por WhatsApp.</p>`;
+  if(sbAuth.isAuthenticated()) actualizarEnvioReal(q.units);
+
+  if(!pasoPago){
+    continuarBox.innerHTML='<button class="btn btn-block" id="btnContinuar" type="button">Continuar</button>';
+    document.getElementById('btnContinuar').onclick=()=>{pasoPago=true;renderTodo();};
+    pagoBox.innerHTML='';transferBox.innerHTML='';
+    return;
+  }
+  continuarBox.innerHTML='';
+
+  if(!metodoPago){
+    pagoBox.innerHTML=`<section class="co-box"><span class="eyebrow">FORMA DE PAGO</span><h2>Elige cómo pagar</h2><button class="btn btn-block" id="btnTransferencia" type="button">Transferencia</button></section>`;
+    document.getElementById('btnTransferencia').onclick=()=>{metodoPago='transferencia';renderTodo();};
+    transferBox.innerHTML='';
+    return;
+  }
+  pagoBox.innerHTML='';
+  renderTransferencia(items);
+}
+
+function renderTransferencia(items){
+  const transferBox=document.getElementById('transferContent');
   const bank=TIENDA.transferencia, ready=!!(bank.banco&&bank.beneficiario&&bank.cuenta);
   const autenticado=sbCustomerAuth.isAuthenticated();
   const metodoEntrega=deliveryData().method;
   const porcentaje=metodoEntrega==='personal'?30:100;
-  content.innerHTML=apartadoBanner()+`<section class="co-box transfer-box"><span class="eyebrow">PAGO POR TRANSFERENCIA</span><h2>Cuenta de transferencia</h2>
+  transferBox.innerHTML=apartadoBanner()+`<section class="co-box transfer-box"><span class="eyebrow">PAGO POR TRANSFERENCIA</span><h2>Cuenta de transferencia</h2>
     ${ready?`<dl class="bank-details"><div><dt>Banco</dt><dd id="bankName"></dd></div><div><dt>Beneficiario</dt><dd id="bankOwner"></dd></div><div><dt id="bankType"></dt><dd id="bankAccount"></dd></div></dl><button class="btn btn-ghost" id="copyAccount" type="button">Copiar cuenta</button>`:'<dl class="bank-details bank-empty"><div><dt>Banco</dt><dd aria-label="Banco pendiente"></dd></div><div><dt>Beneficiario</dt><dd aria-label="Beneficiario pendiente"></dd></div><div><dt>CLABE o número de cuenta</dt><dd aria-label="Cuenta pendiente"></dd></div></dl><p class="purchase-note">Datos bancarios pendientes. Solicítalos al dueño por WhatsApp.</p>'}
     <p class="purchase-note">Antes de transferir, confirma la disponibilidad y el total según tu forma de entrega.</p>
     <p class="purchase-note"><b>${metodoEntrega==='personal'?'Entrega personal: solo necesitas transferir y subir el comprobante del 30% de anticipo. El resto se liquida al recibir tu pedido.':'Envío por paquetería: sube el comprobante del 100% del pago para procesar tu pedido.'}</b></p>
@@ -46,7 +82,7 @@ function renderTransfer(){
       <svg width="46" height="46" viewBox="0 0 52 52"><circle class="check-circle" cx="26" cy="26" r="24" fill="none"/><path class="check-mark" fill="none" d="M14 27l7 7 16-16"/></svg>
       <p><b>¡Cuenta y pedido confirmados!</b><br>Folio ${esc(pedidoConfirmado.id)} · Damián lo verá en el panel.</p>
     </div>`:`<button class="btn btn-block" id="confirmCheckout" type="button">Confirmar pedido y apartar 10 min para transferir</button>
-    <p class="purchase-note">Si todavía vas a seguir comprando, no hace falta apartar: hazlo cuando ya tengas listo tu pedido final. Para dar seguimiento a tu pago necesitas iniciar sesión o crear una cuenta (correo y contraseña); tu compra por WhatsApp no lo requiere.</p>
+    <p class="purchase-note">Si todavía vas a seguir comprando, no hace falta apartar: hazlo cuando ya tengas listo tu pedido final. Para dar seguimiento a tu pago necesitas iniciar sesión o crear una cuenta (correo y contraseña).</p>
     <div id="loginInline" hidden>
       <div class="form-grid">
         <div>
@@ -66,7 +102,6 @@ function renderTransfer(){
         </div>
       </div>
     </div>`}
-    <a class="btn btn-block wa-buy" data-purchase="${encodeURIComponent(JSON.stringify(items))}" href="${purchaseURL(items)}" target="_blank" rel="noopener">Continuar compra por WhatsApp</a>
   </section>
   <section class="co-box transfer-box"><span class="eyebrow">DESPUÉS DE TRANSFERIR</span><h2>Envía tu comprobante</h2><p>Sube el comprobante del ${porcentaje}% ${metodoEntrega==='personal'?'de anticipo':'del pago'}. Abre la conversación y adjunta la imagen o el PDF usando el botón de adjuntar de WhatsApp.</p>
     <a class="btn btn-block btn-ghost receipt-buy" data-purchase="${encodeURIComponent(JSON.stringify(items))}" data-receipt="true" href="${purchaseURL(items,true)}" target="_blank" rel="noopener">Enviar comprobante por WhatsApp</a>
@@ -96,14 +131,6 @@ function renderTransfer(){
     try{ await sbCustomerAuth.signUpCliente({nombre:f.get('nombre').trim(), email:f.get('email').trim(), password:f.get('password')}); await completarPedido(items); }
     catch(ex){ err.textContent=ex.message||'No se pudo crear la cuenta.'; }
   });
-  sum.innerHTML='<h3>Tu selección</h3>'+q.lines.map(i=>`<div class="transfer-item"><div>${cardArt(i.p)}</div><div><b>${i.p.marca}</b><p>${i.p.nombre}</p><small>${i.p.ml} · Cantidad: ${i.q}</small><p>${MONEDA(i.unit*i.q)} MXN</p></div></div>`).join('')+`
-    <div class="sum-row"><span>Subtotal</span><span>${MONEDA(q.subtotal)}</span></div>
-    ${q.tier==='distribuidor'?'<p class="purchase-note">Precio de distribuidor aplicado.</p>':q.tier==='mayoreo'?'<p class="purchase-note">Precio de mayoreo aplicado.</p>':''}
-    <div class="sum-row"><span>${deliveryData().method==='personal'?'Entrega personal':'Envío por paquetería (estimado)'}</span><span>${deliveryData().method==='personal'?'Por confirmar':q.shipping?MONEDA(q.shipping):'Gratis'}</span></div>
-    <div id="envioReal"></div>
-    <div class="sum-row total"><span>${deliveryData().method==='personal'?'Subtotal sin entrega':'Total con paquetería'}</span><span>${MONEDA(deliveryData().method==='personal'?q.subtotal:q.total)}</span></div>
-    <p class="purchase-note">Precios en MXN. Para entrega personal, acuerda ubicación, costo y horario por WhatsApp.</p>`;
-  if(sbAuth.isAuthenticated()) actualizarEnvioReal(q.units);
 }
 /* Cotización real con Skydropx cuando ya hay CP, estado, ciudad y colonia.
    Oculta para clientes por ahora (sólo informativa para Damián mientras se
@@ -160,7 +187,7 @@ async function completarPedido(items){
   }catch(e){
     toast('Se apartó tu pedido, pero no se pudo registrar en tu cuenta. Escríbenos por WhatsApp.');
   }
-  renderTransfer();
+  renderTodo();
 }
 /* Comprobante de pago: solo puede subirse cuando ya hay un pedido registrado
    ligado a la cuenta (el que se acaba de confirmar en esta visita, o el más
@@ -201,9 +228,9 @@ async function pageInit(){
       const clave=items=>items.map(i=>i.id+':'+i.q).sort().join(',');
       const propia=clave(selectedPurchase());
       const activo=(await sbCustomerOrders.mine()).find(o=>o.payment==='Por revisar' && clave(o.items)===propia);
-      if(activo) pedidoConfirmado={id:activo.id};
+      if(activo){ pedidoConfirmado={id:activo.id}; pasoPago=true; metodoPago='transferencia'; }
     }catch(e){}
   }
-  renderTransfer();
+  renderTodo();
 }
 </script></body></html>

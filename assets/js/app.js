@@ -315,17 +315,16 @@ function purchaseMessage(items,receipt=false){
 function purchaseURL(items,receipt=false){
   return TIENDA.whatsapp+'?text='+encodeURIComponent(purchaseMessage(items,receipt));
 }
-function purchaseActions(items,id=null){
+function purchaseActions(items,id=null,mostrarBolsa=true){
   const clean=purchaseItems(items);if(!clean.length)return '<p class="purchase-note">No hay productos disponibles para continuar.</p>';
-  const transfer='checkout.html'+(id?'?id='+encodeURIComponent(id)+'&qty='+clean[0].q:'');
-  return `<a class="btn btn-block wa-buy" data-purchase="${encodeURIComponent(JSON.stringify(clean))}" href="${purchaseURL(clean)}" target="_blank" rel="noopener">Continuar compra por WhatsApp</a>
-    <a class="btn btn-block btn-ghost transfer-buy" href="${transfer}">Ver cuenta de transferencia</a>`;
+  const confirmar='checkout.html'+(id?'?id='+encodeURIComponent(id)+'&qty='+clean[0].q:'');
+  return (mostrarBolsa?'<a class="btn btn-block btn-ghost" href="carrito.html">Ver la bolsa</a>':'')
+    +`<a class="btn btn-block confirm-buy" href="${confirmar}">Confirmar</a>`;
 }
 /* ---------- apartado temporal ----------
-   Al confirmar el checkout final (pulsar "Continuar compra por WhatsApp",
-   o el botón de apartar en la página de transferencia) las piezas se
-   apartan 10 minutos. Mientras el cliente solo explora o sigue agregando
-   productos no se aparta nada. El contador es informativo: la base
+   Al confirmar el pedido en el paso de transferencia (checkout.html) las
+   piezas se apartan 10 minutos. Mientras el cliente solo explora o sigue
+   agregando productos no se aparta nada. El contador es informativo: la base
    libera el apartado sola al vencer. */
 function apartadoRestante(){
   const exp = typeof MI_APARTADO !== 'undefined' ? MI_APARTADO.expira : null;
@@ -392,7 +391,7 @@ function deliveryMessage(){const d=deliveryData();return [
  ...[['recipient','Recibe'],['city','Ciudad'],['estado','Estado'],['colonia','Colonia'],['postcode','Código postal'],['address','Dirección'],['reference','Referencias'],['schedule','Horario solicitado (pendiente de confirmar)']].filter(([k])=>d[k]&&(k!=='schedule'||d.method==='personal')).map(([k,l])=>l+': '+d[k])];}
 function mountDelivery(){
  const target=document.getElementById('deliveryChoice');if(!target)return;
- target.innerHTML=`<details class="delivery-box"><summary>Elige cómo recibir tu compra</summary><p>Opcional. Puedes acordar los detalles por WhatsApp.</p><label class="field"><span>Modalidad de entrega</span><select name="method"><option value="">Por acordar</option><option value="personal">Entrega personal</option><option value="paqueteria">Envío por paquetería</option></select></label><div class="form-grid">
+ target.innerHTML=`<details class="delivery-box" ${location.pathname.endsWith('checkout.html')?'open':''}><summary>Elige cómo recibir tu compra</summary><p>Opcional. Puedes acordar los detalles por WhatsApp.</p><label class="field"><span>Modalidad de entrega</span><select name="method"><option value="">Por acordar</option><option value="personal">Entrega personal</option><option value="paqueteria">Envío por paquetería</option></select></label><div class="form-grid">
  <label class="field"><span>Persona que recibe</span><input name="recipient" autocomplete="name" maxlength="100"></label>
  <label class="field"><span>Estado</span><input name="estado" autocomplete="address-level1" maxlength="100"></label>
  <label class="field"><span>Ciudad o municipio</span><input name="city" autocomplete="address-level2" maxlength="100"></label>
@@ -409,4 +408,5 @@ function refreshDelivery(){
  const note=document.getElementById('deliveryExplanation');if(note)note.textContent=deliveryData().method==='personal'?'El dueño confirmará cobertura, costo y horario. La hora indicada es una solicitud.':'Paquetería: $149, gratis desde 3 piezas. El tiempo de llegada se confirma según destino.';
  const schedule=document.querySelector('#deliveryChoice [name="schedule"]');if(schedule)schedule.disabled=deliveryData().method!=='personal';
  renderCart();
+ if(typeof onDeliveryChange === 'function') onDeliveryChange();
 }

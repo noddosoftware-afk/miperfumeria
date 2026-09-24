@@ -87,7 +87,7 @@ function pintarPagina(){
     ${mayoreo ? `<div class="sum-row" style="color:var(--ok)"><span>Precio mayoreo</span><span>Aplicado ✓</span></div>`
               : `<div class="sum-row" style="color:var(--muted)"><span>Faltan ${MONEDA(TIENDA.mayoreoMonto-cartBaseTotal())} para mayoreo</span><span></span></div>`}
     <div class="sum-row total"><span>${deliveryData().method==='personal'?'Subtotal sin entrega':'Total con paquetería'}</span><span>${MONEDA(sub+(deliveryData().method==='personal'?0:envio))}</span></div>
-    <div class="purchase-actions">${purchaseActions(c)}</div>
+    <div class="purchase-actions">${purchaseActions(c,null,false)}</div>
     <a class="btn btn-block btn-ghost" style="margin-top:8px" href="catalogo.html">Seguir comprando</a>
     <p style="font-size:11.5px;color:var(--muted);margin-top:16px;line-height:1.7">
       Pago por transferencia. El dueño confirma disponibilidad, revisa el pago y coordina la entrega por WhatsApp.</p>`;
