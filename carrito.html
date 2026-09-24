@@ -95,7 +95,7 @@ function pintarPagina(){
 function pageInit(){
   pintarPagina();
   const enCarrito = getCart().map(i=>i.id);
-  renderCards(PRODUCTOS.filter(p=>!enCarrito.includes(p.id)).slice(0,8), "#railSug");
+  renderCards(PRODUCTOS.filter(p=>!enCarrito.includes(p.id) && disponible(p)).slice(0,8), "#railSug");
 }
 </script>
 </body>

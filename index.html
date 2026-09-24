@@ -260,10 +260,10 @@
 <script src="assets/js/app.js"></script>
 <script>
 function pageInit(){
-  renderCards(PRODUCTOS.filter(p=>p.stock>0), "#railStock");
-  renderCards(PRODUCTOS.filter(p=>p.best), "#railBest");
-  renderCards(PRODUCTOS.filter(p=>p.nuevo).slice(0,11), "#railNuevo");
-  renderCards(PRODUCTOS.filter(p=>p.oferta || (p.lista && (1-p.precio/p.lista) >= .2)).slice(0,4), "#gridOferta");
+  renderCards(PRODUCTOS.filter(p=>disponible(p) && p.stock!==null), "#railStock");
+  renderCards(PRODUCTOS.filter(p=>disponible(p) && p.best), "#railBest");
+  renderCards(PRODUCTOS.filter(p=>disponible(p) && p.nuevo).slice(0,11), "#railNuevo");
+  renderCards(PRODUCTOS.filter(p=>disponible(p) && (p.oferta || (p.lista && (1-p.precio/p.lista) >= .2))).slice(0,4), "#gridOferta");
 
   // marcas destacadas
   const marcas = [["Rasasi","Hawas Collection"],["Armaf","Odyssey & Club de Nuit"],["Lattafa","Dynasty & Fakhar"],

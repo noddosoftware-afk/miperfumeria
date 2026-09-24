@@ -97,7 +97,7 @@
 <script src="assets/js/layout.js"></script>
 <script src="assets/js/app.js"></script>
 <script>
-function pageInit(){ renderCards(PRODUCTOS.filter(p=>p.rating>=4.7).slice(0,10), "#railTop"); }
+function pageInit(){ renderCards(PRODUCTOS.filter(p=>disponible(p) && p.rating>=4.7).slice(0,10), "#railTop"); }
 </script>
 </body>
 </html>

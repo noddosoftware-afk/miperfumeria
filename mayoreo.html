@@ -138,7 +138,7 @@
 <script src="assets/js/app.js"></script>
 <script>
 function pageInit(){
-  const items=PRODUCTOS.filter(p=>p.stock!=null);
+  const items=PRODUCTOS.filter(p=>p.stock!=null && p.stock>0);
   document.querySelector('#inventoryPrices').innerHTML=items.map(p=>`<tr><td><a href="producto.html?id=${p.id}">${p.marca} · ${p.nombre}</a><br><small>${p.ml}</small></td><td>${p.stock} ${p.contenido?'set':'pza'}</td><td>${MONEDA(p.precio)}</td><td>${MONEDA(p.mayoreo)}</td><td>${MONEDA(p.distribuidor)}</td></tr>`).join('');
   renderCards(items, '#railMay');
 }

@@ -155,7 +155,12 @@ const cartBaseTotal = () => getCart().reduce((s,i)=>s + byId(i.id).precio*i.q, 0
 const cartWholesale = () => cartBaseTotal() >= TIENDA.mayoreoMonto;
 const cartUnitPrice = p => cartWholesale() && p.mayoreo ? p.mayoreo : p.precio;
 const cartTotal = () => getCart().reduce((s,i)=>s + cartUnitPrice(byId(i.id))*i.q, 0);
-const stockText = p => p.stock==null ? 'Consultar disponibilidad' : p.stock===0 ? 'Agotado' : p.stock===1 ? (p.contenido?'Último set disponible':'Última pieza disponible') : p.stock+' '+(p.contenido?'sets disponibles':'piezas disponibles');
+/* Sin inventario capturado (null) = disponible, se vende sin llevar conteo.
+   Solo 0 exacto es agotado: en ese caso se oculta de todo listado (ver
+   `disponible()`), así que esto solo se ve si alguien entra por el link
+   directo del producto. */
+const disponible = p => p.stock !== 0;
+const stockText = p => p.stock==null ? '' : p.stock===0 ? 'Agotado' : p.stock===1 ? (p.contenido?'Último set disponible':'Última pieza disponible') : p.stock+' '+(p.contenido?'sets disponibles':'piezas disponibles');
 
 function renderCart(){
   const c = getCart();
@@ -229,7 +234,7 @@ function filtrar(){
   const f  = q.get("f"), m = q.get("m"), fam = q.get("fam"), max = +q.get("max") || 0;
   const txt = (q.get("q") || "").toLowerCase().trim();
 
-  let arr = PRODUCTOS.slice();
+  let arr = PRODUCTOS.filter(disponible);
   if(f === "inventario") arr = arr.filter(p=>p.stock>0);
   else if(f === "best")   arr = arr.filter(p=>p.best);
   else if(f === "nuevo")  arr = arr.filter(p=>p.nuevo);

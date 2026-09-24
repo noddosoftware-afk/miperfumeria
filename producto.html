@@ -155,8 +155,8 @@ function pageInit(){
     <div class="acc-item"><button class="acc-btn">Garantía de autenticidad <span class="sign">+</span></button>
       <div class="acc-panel"><p>Todos los perfumes se venden sellados y con su código de lote visible. Si al recibirlo detectas cualquier señal de que no es original, lo recogemos sin costo y te reembolsamos el total.</p></div></div>`;
 
-  const rel = PRODUCTOS.filter(x => x.id !== p.id && (x.familia === p.familia || x.marca === p.marca)).slice(0,8);
-  renderCards(rel.length ? rel : PRODUCTOS.filter(x=>x.best), "#railRel");
+  const rel = PRODUCTOS.filter(x => x.id !== p.id && disponible(x) && (x.familia === p.familia || x.marca === p.marca)).slice(0,8);
+  renderCards(rel.length ? rel : PRODUCTOS.filter(x=>disponible(x) && x.best), "#railRel");
 
   document.querySelectorAll(".pdp-thumbs button").forEach(b => b.addEventListener("click", () => {
     document.querySelectorAll(".pdp-thumbs button").forEach(x=>x.classList.remove("is-on"));
