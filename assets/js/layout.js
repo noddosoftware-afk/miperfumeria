@@ -35,10 +35,10 @@ function logoSVG(color){
 <svg viewBox="0 0 300 46" aria-label="miperfumeria">
   <text x="0" y="33" font-family="Montserrat, Arial, sans-serif" font-size="31" font-weight="800"
         letter-spacing="-0.5" fill="${c}" textLength="236" lengthAdjust="spacingAndGlyphs">MI PERFUMERI</text>
-  <g fill="none" stroke="${c}" stroke-width="2" stroke-linejoin="round">
-    <rect x="244" y="22" width="21" height="11"/>
-    <path d="M244 22 L254.5 15 L265 22"/>
-    <circle cx="254.5" cy="13" r="2"/>
+  <g fill="none" stroke="${c}" stroke-width="2.2" stroke-linejoin="round">
+    <rect x="244" y="17" width="30" height="16"/>
+    <path d="M244 17 L259 7 L274 17"/>
+    <circle cx="259" cy="4" r="3"/>
   </g>
 </svg>`;
 }
