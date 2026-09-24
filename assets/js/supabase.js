@@ -60,6 +60,15 @@ function crearSesion(storageKey){
 
 const sbAuth = crearSesion('mp_session'); // panel admin
 async function sbRequest(path, opts={}){ return sbAuth.request(path, opts); }
+/* Cualquier correo/contraseña válido entra a Supabase Auth, incluido el de
+   un cliente que solo se registró para dar seguimiento a su pedido. Esta
+   comprobación aparte es la que decide si además es administrador real
+   (tabla admins), y es la que protegen login.html y admin.html antes de
+   dejar pasar al panel. */
+sbAuth.isAdmin = async function(){
+  try{ return !!(await sbAuth.request('/rest/v1/rpc/is_admin', {method:'POST', body:'{}'})); }
+  catch{ return false; }
+};
 
 const sbCustomerAuth = crearSesion('mp_customer_session'); // cuenta del cliente
 sbCustomerAuth.signUpCliente = async function({nombre, email, password}){

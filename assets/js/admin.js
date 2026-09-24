@@ -65,6 +65,7 @@ $('#newOrder').onclick=registerOrder;$('#closeEditor').onclick=$('#cancelEditor'
 $('#logoutBtn').onclick=()=>{sbAuth.signOut();location.href='login.html'};
 (async function boot(){
  if(!sbAuth.isAuthenticated()){location.href='login.html';return}
+ if(!(await sbAuth.isAdmin())){sbAuth.signOut();location.href='login.html';return}
  try{
   const [liveProducts,liveOrders]=await Promise.all([sbProducts.fetchAll(),sbOrders.fetchAll()]);
   if(liveProducts.length){PRODUCTOS.length=0;PRODUCTOS.push(...liveProducts)}

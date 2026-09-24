@@ -12,7 +12,7 @@
 </div>
 <script src="assets/js/supabase.js"></script>
 <script>
-if(sbAuth.isAuthenticated()) location.href = 'admin.html';
+(async()=>{ if(sbAuth.isAuthenticated() && await sbAuth.isAdmin()) location.href = 'admin.html'; else if(sbAuth.isAuthenticated()) sbAuth.signOut(); })();
 document.getElementById('loginForm').addEventListener('submit', async e=>{
   e.preventDefault();
   const err = document.getElementById('loginError');
@@ -22,9 +22,10 @@ document.getElementById('loginForm').addEventListener('submit', async e=>{
   btn.disabled = true; btn.textContent = 'Entrando…';
   try{
     await sbAuth.signIn(fd.get('email').trim(), fd.get('password'));
+    if(!(await sbAuth.isAdmin())){ sbAuth.signOut(); throw new Error('sin-acceso'); }
     location.href = 'admin.html';
   }catch(ex){
-    err.textContent = 'Correo o contraseña incorrectos.';
+    err.textContent = ex.message === 'sin-acceso' ? 'Esta cuenta no tiene acceso al panel de administración.' : 'Correo o contraseña incorrectos.';
     btn.disabled = false; btn.textContent = 'Entrar';
   }
 });
