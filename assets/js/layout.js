@@ -86,15 +86,17 @@ function buildHeader(){
 
   return `
 <div class="announce">
-  <div class="wrap">
-    <button class="announce-nav" data-ann="-1" aria-label="Aviso anterior">‹</button>
-    <div class="announce-track">
-      <div class="announce-item is-on"><strong>ENVÍO GRATIS</strong> comprando 3 piezas o más · a todo México</div>
-      <div class="announce-item">Precio de <strong>MAYOREO</strong> en pedidos desde $4,000 MXN</div>
-      <div class="announce-item"><strong>100% ORIGINALES</strong> · Garantía de autenticidad en cada pedido</div>
-      <div class="announce-item">Compra por <strong>WhatsApp</strong> · Pago por transferencia</div>
+  <div class="announce-track">
+    <div class="announce-scroll">
+      <span class="announce-item"><strong>ENVÍO GRATIS</strong> comprando 3 piezas o más · a todo México</span>
+      <span class="announce-item">Precio de <strong>MAYOREO</strong> en pedidos desde $4,000 MXN</span>
+      <span class="announce-item"><strong>100% ORIGINALES</strong> · Garantía de autenticidad en cada pedido</span>
+      <span class="announce-item">Compra por <strong>WhatsApp</strong> · Pago por transferencia</span>
+      <span class="announce-item" aria-hidden="true"><strong>ENVÍO GRATIS</strong> comprando 3 piezas o más · a todo México</span>
+      <span class="announce-item" aria-hidden="true">Precio de <strong>MAYOREO</strong> en pedidos desde $4,000 MXN</span>
+      <span class="announce-item" aria-hidden="true"><strong>100% ORIGINALES</strong> · Garantía de autenticidad en cada pedido</span>
+      <span class="announce-item" aria-hidden="true">Compra por <strong>WhatsApp</strong> · Pago por transferencia</span>
     </div>
-    <button class="announce-nav" data-ann="1" aria-label="Siguiente aviso">›</button>
   </div>
 </div>
 

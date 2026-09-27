@@ -88,14 +88,13 @@ h1,h2,h3,h4{margin:0;font-weight:600}
    BARRA DE AVISOS
    ========================================================= */
 .announce{background:var(--navy);color:#fff;font-size:12px}
-.announce .wrap{display:flex;align-items:center;justify-content:center;gap:18px;height:38px;position:relative}
-.announce-track{height:38px;display:flex;align-items:center;overflow:hidden;flex:1;justify-content:center}
-.announce-item{display:none;letter-spacing:.06em;text-align:center}
-.announce-item.is-on{display:block;animation:fadeUp .5s ease}
+.announce-track{height:38px;display:flex;align-items:center;overflow:hidden;width:100%}
+.announce-scroll{display:flex;align-items:center;white-space:nowrap;animation:ticker 28s linear infinite;will-change:transform}
+.announce-item{letter-spacing:.06em;padding:0 30px;flex-shrink:0;position:relative}
+.announce-item::after{content:"•";position:absolute;right:-3px;opacity:.5}
 .announce-item strong{font-weight:700;letter-spacing:.1em}
-@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.announce-nav{color:rgba(255,255,255,.6);font-size:16px;line-height:1;padding:4px 8px}
-.announce-nav:hover{color:#fff}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.announce-scroll{animation:none}}
 
 /* fila de servicios (como el cintillo superior de Palacio) */
 .utility{border-bottom:1px solid var(--line);background:#fff;font-size:11px}
@@ -589,9 +588,8 @@ section.tight{padding:clamp(28px,3.5vw,44px) 0}
 
 /* ---------- correcciones móviles ---------- */
 @media (max-width:900px){
-  .announce .wrap{height:auto;padding:9px 0;gap:10px}
-  .announce-track{height:auto}
-  .announce-item{font-size:11.5px}
+  .announce-track{height:34px}
+  .announce-item{font-size:11.5px;padding:0 20px}
   .header-main{grid-template-columns:auto 1fr auto;gap:10px}
   .header-search{display:block;max-width:none;width:auto}
   .header-search .search-field{display:none}

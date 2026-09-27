@@ -59,15 +59,6 @@ function goSearch(e){
 
 /* ---------- interfaz general ---------- */
 function initUI(){
-  // barra de avisos rotativa
-  const items = $$(".announce-item");
-  let ai = 0;
-  const show = i => { items.forEach(x=>x.classList.remove("is-on")); items[(i+items.length)%items.length].classList.add("is-on"); };
-  if(items.length){
-    const timer = setInterval(()=>show(++ai), 4200);
-    $$("[data-ann]").forEach(b=>b.addEventListener("click",()=>{ clearInterval(timer); show(ai += +b.dataset.ann); }));
-  }
-
   // apertura de paneles
   const ov = $("#overlay");
   const open = what => {
