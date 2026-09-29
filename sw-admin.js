@@ -5,6 +5,11 @@
 self.addEventListener('install', e => { self.skipWaiting(); });
 self.addEventListener('activate', e => { self.clients.claim(); });
 
+/* Algunos navegadores (sobre todo Android más viejos) solo ofrecen
+   "Instalar app"/"Agregar a inicio" si el service worker responde al
+   evento fetch, aunque sea sin cachear nada — pass-through simple. */
+self.addEventListener('fetch', e => { e.respondWith(fetch(e.request)); });
+
 self.addEventListener('push', e => {
   let data = {};
   try{ data = e.data ? e.data.json() : {}; }catch{}
