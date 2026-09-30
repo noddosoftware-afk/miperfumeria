@@ -635,7 +635,6 @@ section.tight{padding:clamp(28px,3.5vw,44px) 0}
 .pdp-gallery-single{display:flex;flex-direction:column;min-width:0;align-self:start;position:sticky;top:135px}
 .pdp-gallery-single .pdp-main-img{width:100%;overflow:hidden}
 .pdp-main-img .product-photo{padding:28px;max-height:620px}
-.image-caption{font-size:11px;color:var(--muted);margin:0;text-align:center}
 .pdp-intro{color:var(--muted);font-size:13px;margin:12px 0}
 .price-tiers{display:grid;grid-template-columns:repeat(3,1fr);margin-top:24px;border:1px solid var(--line)}
 .price-tiers>div{padding:16px 12px;border-right:1px solid var(--line)}
