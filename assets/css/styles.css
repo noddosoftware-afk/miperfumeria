@@ -506,8 +506,8 @@ section.tight{padding:clamp(28px,3.5vw,44px) 0}
 /* whatsapp flotante */
 .wa-float{
   position:fixed;right:22px;bottom:22px;z-index:80;width:54px;height:54px;border-radius:50%;
-  background:#25D366;color:#fff;display:flex;align-items:center;justify-content:center;
-  box-shadow:0 10px 30px -8px rgba(37,211,102,.6);
+  background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 10px 30px -8px rgba(16,28,58,.6);transition:transform .2s ease;
 }
 .wa-float:hover{transform:scale(1.06)}
 
