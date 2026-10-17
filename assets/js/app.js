@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderCart();
   renderFavCount();
   if (typeof pageInit === "function") pageInit();
+  watchReveal(document); // encabezados de sección y otros bloques estáticos marcados .reveal
   mountDelivery();
   if (typeof apartadoRestante === "function" && apartadoRestante() > 0) startHoldTicker();
   mostrarAvisoCookies();
@@ -38,6 +39,19 @@ function mostrarAvisoCookies(){
 /* ---------- utilidades ---------- */
 const $  = (s, c = document) => c.querySelector(s);
 const $$ = (s, c = document) => [...c.querySelectorAll(s)];
+
+/* ---------- entrada escalonada al hacer scroll (patrón premium) ---------- */
+const _revealIO = new IntersectionObserver(
+  (entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); _revealIO.unobserve(e.target); } }),
+  { threshold: .12, rootMargin: "0px 0px -40px" }
+);
+function watchReveal(container) {
+  $$(".reveal:not(.in)", container || document).forEach((n, i) => {
+    if (!n.style.getPropertyValue("--d")) n.style.setProperty("--d", ((i % 4) * .06) + "s");
+    _revealIO.observe(n);
+  });
+}
+window.watchReveal = watchReveal;
 const byId = id => PRODUCTOS.find(p => p.id === id);
 const params = () => new URLSearchParams(location.search);
 
@@ -133,7 +147,13 @@ function cardHTML(p){
   </div>
 </article>`;
 }
-const renderCards = (arr, sel) => { const n = $(sel); if(n) n.innerHTML = arr.map(cardHTML).join(""); };
+const renderCards = (arr, sel) => {
+  const n = $(sel);
+  if (!n) return;
+  n.innerHTML = arr.map(cardHTML).join("");
+  $$(".card", n).forEach((c) => c.classList.add("reveal"));
+  watchReveal(n);
+};
 
 /* ---------- bolsa de compra ---------- */
 const CART_KEY = "mp_cart";

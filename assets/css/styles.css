@@ -718,3 +718,8 @@ section.tight{padding:clamp(28px,3.5vw,44px) 0}
 #cookieBanner a{color:#fff;text-decoration:underline}
 #cookieBanner button{flex-shrink:0;background:#fff;color:var(--navy);border:0;padding:10px 20px;font-family:var(--f-brand);font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
 @media(max-width:640px){#cookieBanner{padding:14px 16px;gap:12px}#cookieBanner button{width:100%}}
+
+/* ---------- Entrada escalonada al hacer scroll ---------- */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease;transition-delay:var(--d,0s)}
+.reveal.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
